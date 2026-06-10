@@ -1,0 +1,348 @@
+.tableContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  background: var(--bg-main);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.filtersBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.searchGroup {
+  flex: 1;
+  min-width: 250px;
+  display: flex;
+  background: rgba(9, 13, 22, 0.4);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0 12px;
+  align-items: center;
+}
+
+.searchGroup input {
+  width: 100%;
+  padding: 10px 4px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.searchGroup input:focus {
+  outline: none;
+}
+
+.selectWrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.filtersBar select {
+  padding: 10px 14px;
+  background: rgba(9, 13, 22, 0.4);
+  border: 1px solid var(--border-color);
+  color: var(--color-text-main);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  min-width: 150px;
+}
+
+.filtersBar select:focus {
+  border-color: var(--color-primary);
+}
+
+.btnExport {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--color-text-main);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.btnExport:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--color-primary);
+  color: var(--color-primary-hover);
+}
+
+.tableWrapper {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.leadTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.leadTable th {
+  background: rgba(15, 23, 42, 0.5);
+  padding: 14px 18px;
+  font-weight: 600;
+  color: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.leadTable td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--color-text-main);
+  vertical-align: middle;
+}
+
+.leadTable tr:last-child td {
+  border-bottom: none;
+}
+
+.leadTable tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.clientNameCell {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.addressCell {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contactInfoCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.contactLink {
+  color: var(--color-primary-hover);
+  text-decoration: none;
+}
+
+.contactLink:hover {
+  text-decoration: underline;
+}
+
+.wasteVolumeCell {
+  font-weight: 600;
+  text-transform: capitalize;
+  font-size: 0.8rem;
+}
+
+.volumeHigh { color: var(--color-danger); }
+.volumeMedium { color: var(--color-warning); }
+.volumeLow { color: var(--color-primary); }
+
+.actionGroup {
+  display: flex;
+  gap: 8px;
+}
+
+.btnAction {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btnActionPrimary {
+  background: var(--color-primary);
+  color: #000000;
+}
+
+.btnActionPrimary:hover {
+  background: var(--color-primary-hover);
+}
+
+.btnActionSecondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--color-text-main);
+}
+
+.btnActionSecondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.noResults {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}
+
+/* Mobile responsive card list styling */
+.mobileCardList {
+  display: none; /* Hidden on desktop */
+}
+
+@media (max-width: 768px) {
+  .tableContainer {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .filtersBar {
+    padding: 12px;
+    gap: 10px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchGroup {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .selectWrapper {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .filtersBar select {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .btnExport {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  .tableWrapper {
+    display: none; /* Hide traditional table on mobile */
+  }
+
+  .mobileCardList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    padding-bottom: 24px;
+  }
+
+  .mobileCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  }
+
+  .mobileCardHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+  }
+
+  .mobileCardTitle {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.3;
+  }
+
+  .mobileCardBadges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .mobileCardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mobileCardInfo {
+    display: flex;
+    font-size: 0.85rem;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .mobileCardLabel {
+    color: var(--color-text-muted);
+    font-weight: 600;
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+
+  .mobileCardValue {
+    color: var(--color-text-main);
+  }
+
+  .mobileCardContact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mobileCardActions {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 12px;
+    margin-top: 4px;
+  }
+
+  .mobileCardActions button {
+    flex: 1;
+    justify-content: center;
+    padding: 10px;
+    font-size: 0.75rem;
+  }
+}
+
