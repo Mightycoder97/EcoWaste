@@ -10,6 +10,10 @@ interface LeadTableProps {
   onInvestigateClient: (client: Client) => void;
   onSaveToCRM: (client: Client) => void;
   savedIds: Set<string>;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: () => void;
+  onBulkInvestigate?: () => void;
 }
 
 export default function LeadTable({
@@ -18,6 +22,10 @@ export default function LeadTable({
   onInvestigateClient,
   onSaveToCRM,
   savedIds,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+  onBulkInvestigate,
 }: LeadTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -162,6 +170,16 @@ export default function LeadTable({
           <table className={styles.leadTable}>
             <thead>
               <tr>
+                {selectedIds && onToggleSelectAll && (
+                  <th style={{ width: '40px', padding: '14px 10px', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={filteredClients.length > 0 && filteredClients.every((c) => selectedIds.has(c.id))}
+                      onChange={onToggleSelectAll}
+                      style={{ cursor: 'pointer', accentColor: 'var(--color-primary)', width: '16px', height: '16px' }}
+                    />
+                  </th>
+                )}
                 <th>Establecimiento</th>
                 <th>Tipo</th>
                 <th>Ubicación</th>
@@ -175,7 +193,17 @@ export default function LeadTable({
                 const isSaved = savedIds.has(client.id);
                 
                 return (
-                  <tr key={client.id}>
+                  <tr key={client.id} className={selectedIds?.has(client.id) ? styles.rowSelected : ''}>
+                    {selectedIds && onToggleSelect && (
+                      <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(client.id)}
+                          onChange={() => onToggleSelect(client.id)}
+                          style={{ cursor: 'pointer', accentColor: 'var(--color-primary)', width: '16px', height: '16px' }}
+                        />
+                      </td>
+                    )}
                     <td>
                       <div className={styles.clientNameCell}>{client.name}</div>
                       <span className={`status-badge status-${client.status}`}>
@@ -269,9 +297,21 @@ export default function LeadTable({
         ) : (
           filteredClients.map((client) => {
             const isSaved = savedIds.has(client.id);
+            const isChecked = selectedIds?.has(client.id);
             
             return (
-              <div key={client.id} className={styles.mobileCard}>
+              <div key={client.id} className={`${styles.mobileCard} ${isChecked ? styles.cardSelected : ''}`}>
+                {selectedIds && onToggleSelect && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px dashed rgba(255, 255, 255, 0.05)' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Seleccionar para análisis</span>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => onToggleSelect(client.id)}
+                      style={{ cursor: 'pointer', accentColor: 'var(--color-primary)', width: '18px', height: '18px' }}
+                    />
+                  </div>
+                )}
                 <div className={styles.mobileCardHeader}>
                   <div className={styles.mobileCardTitle}>{client.name}</div>
                   <div className={styles.mobileCardBadges}>
@@ -358,6 +398,24 @@ export default function LeadTable({
           })
         )}
       </div>
+
+      {/* Barra flotante de acciones en lote */}
+      {selectedIds && selectedIds.size > 0 && onBulkInvestigate && (
+        <div className={styles.bulkActionBar}>
+          <div className={styles.bulkActionInfo}>
+            <span className={styles.bulkActionIcon}>⚡</span>
+            <div>
+              <div className={styles.bulkActionTitle}>
+                <b>{selectedIds.size}</b> {selectedIds.size === 1 ? 'establecimiento seleccionado' : 'establecimientos seleccionados'}
+              </div>
+              <div className={styles.bulkActionSubtitle}>Listo para investigación con DeepSeek V4</div>
+            </div>
+          </div>
+          <button onClick={onBulkInvestigate} className={styles.btnBulkAction}>
+            🤖 Investigar Selección
+          </button>
+        </div>
+      )}
     </div>
   );
 }

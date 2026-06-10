@@ -25,6 +25,12 @@ export default function Dashboard() {
   const [isLocating, setIsLocating] = useState(false);
   const [activeSearchEngine, setActiveSearchEngine] = useState<string>('');
 
+  // Bulk selection and progress states
+  const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(new Set());
+  const [isBulkAnalyzing, setIsBulkAnalyzing] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0, activeName: '' });
+  const [bulkLogs, setBulkLogs] = useState<string[]>([]);
+
   const getUserLocation = (silent: boolean = false) => {
     if (!navigator.geolocation) {
       if (!silent) alert('La geolocalización no es compatible con este navegador.');
@@ -264,7 +270,8 @@ export default function Dashboard() {
         const service = new win.google.maps.places.PlacesService(dummyDiv);
         
         const searchPromises = types.map((t) => {
-          return new Promise<any[]>((res, rej) => {
+          return new Promise<any[]>((resType) => {
+            let allPlaces: any[] = [];
             const request: any = {
               location: new win.google.maps.LatLng(lat, lng),
               radius: radius,
@@ -282,16 +289,26 @@ export default function Dashboard() {
               request.type = 'veterinary_care';
             }
 
-            service.nearbySearch(request, (results: any[], status: any) => {
+            const callback = (results: any[], status: any, pagination: any) => {
               if (status === win.google.maps.places.PlacesServiceStatus.OK) {
-                res(results || []);
+                allPlaces = [...allPlaces, ...results];
+                if (pagination && pagination.hasNextPage) {
+                  // Esperar 2 segundos antes de pedir la siguiente página
+                  setTimeout(() => {
+                    pagination.nextPage();
+                  }, 2000);
+                } else {
+                  resType(allPlaces);
+                }
               } else if (status === win.google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-                res([]);
+                resType(allPlaces);
               } else {
                 console.warn(`[GooglePlaces] Tipo '${t}' falló con estado:`, status);
-                rej(new Error(`Google Places falló con estado: ${status}`));
+                resType(allPlaces); // Retornar lo que se haya recolectado
               }
-            });
+            };
+
+            service.nearbySearch(request, callback);
           });
         });
 
@@ -340,11 +357,156 @@ export default function Dashboard() {
     });
   };
 
+  const handleToggleSelectClient = (id: string) => {
+    setSelectedClientIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectAllClients = () => {
+    setSelectedClientIds((prev) => {
+      const visibleIds = searchResults.map((c) => c.id);
+      const allSelected = visibleIds.every((id) => prev.has(id));
+      
+      const next = new Set(prev);
+      if (allSelected) {
+        visibleIds.forEach((id) => next.delete(id));
+      } else {
+        visibleIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const handleBulkInvestigate = async () => {
+    if (selectedClientIds.size === 0) return;
+    
+    setIsBulkAnalyzing(true);
+    setBulkLogs([]);
+    const idsArray = Array.from(selectedClientIds);
+    const total = idsArray.length;
+    
+    setBulkProgress({ current: 0, total, activeName: '' });
+    
+    const dsKey = localStorage.getItem('DS_API_KEY') || 'sk-f9a0f8949ddd4e15a9445a1813f70942';
+    const spKey = localStorage.getItem('SERPER_API_KEY') || '';
+
+    const clientsToAnalyze = idsArray.map(id => {
+      return searchResults.find(c => c.id === id) || savedClients.find(c => c.id === id);
+    }).filter((c): c is Client => c !== undefined);
+
+    let logsAccumulator: string[] = [];
+    const addBulkLog = (text: string) => {
+      const time = new Date().toLocaleTimeString();
+      logsAccumulator = [...logsAccumulator, `[${time}] ${text}`];
+      setBulkLogs(logsAccumulator);
+    };
+
+    addBulkLog(`🚀 Iniciando investigación automatizada en lote para ${total} establecimientos...`);
+
+    for (let i = 0; i < clientsToAnalyze.length; i++) {
+      const client = clientsToAnalyze[i];
+      setBulkProgress({ current: i + 1, total, activeName: client.name });
+      
+      addBulkLog(`⏳ [${i + 1}/${total}] Investigando "${client.name}"...`);
+      
+      let crmClient = client;
+      if (!savedClients.some((c) => c.id === client.id)) {
+        addBulkLog(`📝 Registrando "${client.name}" en CRM...`);
+        const newClient: Client = {
+          ...client,
+          status: 'nuevo',
+          created_at: new Date().toISOString(),
+        };
+
+        if (isSupabaseMode) {
+          const sbUrl = localStorage.getItem('SB_URL') || '';
+          const sbKey = localStorage.getItem('SB_ANON_KEY') || '';
+          try {
+            const response = await fetch('/api/clients', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-supabase-url': sbUrl,
+                'x-supabase-anon-key': sbKey,
+              },
+              body: JSON.stringify(newClient),
+            });
+            if (response.ok) {
+              const saved = await response.json();
+              crmClient = saved;
+              setSavedClients((prev) => [saved, ...prev]);
+            }
+          } catch (error) {
+            console.error('Fallo al guardar en Supabase:', error);
+          }
+        } else {
+          const updated = [newClient, ...savedClients];
+          setSavedClients(updated);
+          localStorage.setItem('CRM_CLIENTS', JSON.stringify(updated));
+        }
+      }
+
+      try {
+        const response = await fetch('/api/research', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            client: crmClient,
+            keys: {
+              deepseekKey: dsKey,
+              serperKey: spKey,
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Error en servidor.');
+        }
+
+        const data = await response.json();
+        
+        setSavedClients((prev) => {
+          const next = prev.map((c) => (c.id === data.client.id ? data.client : c));
+          if (!isSupabaseMode) {
+            localStorage.setItem('CRM_CLIENTS', JSON.stringify(next));
+          }
+          return next;
+        });
+
+        setSearchResults((prev) =>
+          prev.map((c) => (c.id === data.client.id ? data.client : c))
+        );
+
+        addBulkLog(`✅ [${i + 1}/${total}] "${client.name}" investigado con éxito.`);
+      } catch (error: any) {
+        addBulkLog(`❌ [${i + 1}/${total}] Error investigando "${client.name}": ${error.message}`);
+      }
+
+      if (i < clientsToAnalyze.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+
+    addBulkLog(`🎉 Proceso en lote finalizado.`);
+    setSelectedClientIds(new Set());
+  };
+
   // 3. Ejecutar la búsqueda geográfica (Google Places con fallback a OSM Overpass)
   const handleGeographicSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoadingSearch(true);
     setActiveSearchEngine('');
+    setSelectedClientIds(new Set());
 
     const lat = parseFloat(latInput);
     const lon = parseFloat(lonInput);
@@ -442,6 +604,17 @@ export default function Dashboard() {
 
   // ID de los clientes guardados para desactivar botón "+" en tabla
   const savedIdsSet = React.useMemo(() => new Set(savedClients.map((c) => c.id)), [savedClients]);
+
+  // Lista unificada para mostrar en el mapa (resultados de búsqueda + clientes guardados)
+  const mapClients = React.useMemo(() => {
+    const list = [...searchResults];
+    savedClients.forEach((sc) => {
+      if (!list.some((c) => c.id === sc.id)) {
+        list.push(sc);
+      }
+    });
+    return list;
+  }, [searchResults, savedClients]);
 
   return (
     <div className={styles.dashboardLayout}>
@@ -656,7 +829,7 @@ export default function Dashboard() {
             <div className={styles.searchContent} data-view={isMobile ? searchViewMode : 'split'}>
               {(!isMobile || searchViewMode === 'mapa') && (
                 <MapView
-                  clients={searchResults}
+                  clients={mapClients}
                   onSelectClient={handleInvestigateClient}
                   origin={{ latitude: parseFloat(latInput), longitude: parseFloat(lonInput) }}
                   onOriginChange={(lat, lon) => {
@@ -664,6 +837,7 @@ export default function Dashboard() {
                     setLonInput(lon.toFixed(4));
                   }}
                   searchRadius={parseInt(radiusInput)}
+                  savedIds={savedIdsSet}
                 />
               )}
               
@@ -674,6 +848,10 @@ export default function Dashboard() {
                   onInvestigateClient={handleInvestigateClient}
                   onSaveToCRM={handleSaveToCRM}
                   savedIds={savedIdsSet}
+                  selectedIds={selectedClientIds}
+                  onToggleSelect={handleToggleSelectClient}
+                  onToggleSelectAll={handleToggleSelectAllClients}
+                  onBulkInvestigate={handleBulkInvestigate}
                 />
               )}
             </div>
@@ -688,6 +866,10 @@ export default function Dashboard() {
             onInvestigateClient={handleInvestigateClient}
             onSaveToCRM={handleSaveToCRM}
             savedIds={savedIdsSet}
+            selectedIds={selectedClientIds}
+            onToggleSelect={handleToggleSelectClient}
+            onToggleSelectAll={handleToggleSelectAllClients}
+            onBulkInvestigate={handleBulkInvestigate}
           />
         )}
 
@@ -750,6 +932,128 @@ export default function Dashboard() {
           onUpdateClient={handleUpdateClientData}
           onSaveNotes={handleSaveNotes}
         />
+      )}
+
+      {/* Panel de Progreso en Lote */}
+      {isBulkAnalyzing && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(5, 8, 16, 0.85)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '650px',
+            padding: '30px',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 20px rgba(16, 185, 129, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px'
+          }}>
+            <div>
+              <h3 style={{ fontSize: '1.4rem', color: '#ffffff', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>🤖</span> Investigación en Lote DeepSeek V4
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                Analizando establecimientos y extrayendo volumen de residuos y contactos...
+              </p>
+            </div>
+
+            {/* Progreso */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '600' }}>
+                <span style={{ color: 'var(--color-primary-hover)' }}>
+                  {bulkProgress.current === bulkProgress.total && bulkProgress.total > 0
+                    ? 'Completado'
+                    : `Procesando: ${bulkProgress.activeName || 'Iniciando...'}`}
+                </span>
+                <span style={{ color: '#ffffff' }}>
+                  {bulkProgress.current} de {bulkProgress.total} ({Math.round((bulkProgress.current / bulkProgress.total) * 100) || 0}%)
+                </span>
+              </div>
+              
+              {/* Barra de progreso */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                height: '10px',
+                borderRadius: '9999px',
+                overflow: 'hidden',
+                border: '1px solid rgba(255, 255, 255, 0.05)'
+              }}>
+                <div style={{
+                  background: 'linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-hover) 100%)',
+                  height: '100%',
+                  width: `${(bulkProgress.current / bulkProgress.total) * 100}%`,
+                  transition: 'width 0.3s ease',
+                  boxShadow: '0 0 8px rgba(16, 185, 129, 0.5)'
+                }} />
+              </div>
+            </div>
+
+            {/* Consola Terminal */}
+            <div style={{
+              background: '#090d16',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              padding: '16px',
+              fontFamily: 'monospace',
+              fontSize: '0.75rem',
+              color: '#10b981',
+              height: '220px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.8)'
+            }}>
+              {bulkLogs.map((log, idx) => (
+                <div key={idx} style={{ lineHeight: '1.4', wordBreak: 'break-all' }}>
+                  {log}
+                </div>
+              ))}
+              {bulkProgress.current < bulkProgress.total && (
+                <div style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>Procesando</span>
+                  <span style={{ animation: 'map-pulse 1.5s infinite' }}>...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Botón de cierre */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+              <button
+                disabled={bulkProgress.current < bulkProgress.total}
+                onClick={() => setIsBulkAnalyzing(false)}
+                style={{
+                  background: bulkProgress.current === bulkProgress.total ? 'var(--color-primary)' : '#1e293b',
+                  color: bulkProgress.current === bulkProgress.total ? '#000000' : 'var(--color-text-muted)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  cursor: bulkProgress.current === bulkProgress.total ? 'pointer' : 'not-allowed',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  transition: 'all 0.2s',
+                  boxShadow: bulkProgress.current === bulkProgress.total ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none'
+                }}
+              >
+                {bulkProgress.current === bulkProgress.total ? 'Cerrar Panel' : 'Procesando lote...'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

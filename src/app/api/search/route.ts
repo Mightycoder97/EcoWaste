@@ -51,32 +51,53 @@ export async function POST(request: Request) {
       try {
         // Ejecutar búsquedas en paralelo por cada tipo seleccionado
         const promises = types.map(async (t: string) => {
-          let url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${rad}&key=${googleKey}`;
-          if (t === 'hospital') {
-            url += `&type=hospital`;
-          } else if (t === 'clinic') {
-            url += `&keyword=clinica`;
-          } else if (t === 'laboratory') {
-            url += `&keyword=laboratorio`;
-          } else if (t === 'dentist') {
-            url += `&type=dentist`;
-          } else if (t === 'veterinary') {
-            url += `&type=veterinary_care`;
-          }
+          let typeResults: any[] = [];
+          let nextPageToken = '';
+          
+          do {
+            let url = '';
+            if (nextPageToken) {
+              url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?pagetoken=${nextPageToken}&key=${googleKey}`;
+            } else {
+              url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${rad}&key=${googleKey}`;
+              if (t === 'hospital') {
+                url += `&type=hospital`;
+              } else if (t === 'clinic') {
+                url += `&keyword=clinica`;
+              } else if (t === 'laboratory') {
+                url += `&keyword=laboratorio`;
+              } else if (t === 'dentist') {
+                url += `&type=dentist`;
+              } else if (t === 'veterinary') {
+                url += `&type=veterinary_care`;
+              }
+            }
 
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const data = await res.json();
-          
-          if (data.status === 'REQUEST_DENIED') {
-            throw new Error(`REQUEST_DENIED: ${data.error_message || 'La clave de API tiene restricciones de Referer/IP y no se puede usar desde el servidor backend'}`);
-          }
-          
-          if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-            throw new Error(`Google Places API status ${data.status}`);
-          }
-          
-          return (data.results || []).map((place: any) => {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            
+            if (data.status === 'REQUEST_DENIED') {
+              throw new Error(`REQUEST_DENIED: ${data.error_message || 'La clave de API tiene restricciones de Referer/IP y no se puede usar desde el servidor backend'}`);
+            }
+            
+            if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+              throw new Error(`Google Places API status ${data.status}`);
+            }
+
+            if (data.results) {
+              typeResults = [...typeResults, ...data.results];
+            }
+
+            nextPageToken = data.next_page_token || '';
+
+            if (nextPageToken) {
+              // La API de Google requiere un pequeño retraso antes de que el token sea utilizable
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+            }
+          } while (nextPageToken);
+
+          return typeResults.map((place: any) => {
             const address = place.vicinity || place.formatted_address || 'Dirección no registrada';
             
             return {

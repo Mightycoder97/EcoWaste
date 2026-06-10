@@ -346,3 +346,122 @@
   }
 }
 
+/* Selección y acciones en lote */
+.rowSelected td {
+  background-color: rgba(16, 185, 129, 0.05) !important;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.2) !important;
+}
+
+.cardSelected {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(16, 185, 129, 0.04) 100%) !important;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1) !important;
+}
+
+.bulkActionBar {
+  position: sticky;
+  bottom: 0px;
+  margin-top: 10px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.bulkActionInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bulkActionIcon {
+  font-size: 1.4rem;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--color-primary-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.bulkActionTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.bulkActionTitle b {
+  color: var(--color-primary-hover);
+  font-size: 1.05rem;
+}
+
+.bulkActionSubtitle {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.btnBulkAction {
+  background: var(--color-primary);
+  color: #000000;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btnBulkAction:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+}
+
+.btnBulkAction:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .bulkActionBar {
+    position: fixed;
+    bottom: 74px; /* Flota encima del bottomNav de móvil */
+    left: 12px;
+    right: 12px;
+    padding: 10px 14px;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    border-radius: 10px;
+  }
+  
+  .btnBulkAction {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+  }
+}
+
