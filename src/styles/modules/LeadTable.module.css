@@ -6,7 +6,7 @@
   background: var(--bg-main);
   height: 100%;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden; /* Do not scroll the whole container on desktop */
 }
 
 .filtersBar {
@@ -93,9 +93,11 @@
 .tableWrapper {
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: auto; /* Allow both vertical and horizontal scroll */
   background: var(--bg-card);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  flex: 1;
+  min-height: 0;
 }
 
 .leadTable {
@@ -106,7 +108,10 @@
 }
 
 .leadTable th {
-  background: rgba(15, 23, 42, 0.5);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #1e293b; /* Solid background matching var(--bg-card) to avoid see-through */
   padding: 14px 18px;
   font-weight: 600;
   color: #ffffff;
@@ -225,6 +230,7 @@
   .tableContainer {
     padding: 16px;
     gap: 16px;
+    overflow-y: auto; /* Enable vertical scroll for the whole container on mobile */
   }
 
   .filtersBar {
