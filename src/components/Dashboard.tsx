@@ -369,16 +369,16 @@ export default function Dashboard() {
     });
   };
 
-  const handleToggleSelectAllClients = () => {
+  const handleToggleSelectAllClients = (visibleIds?: string[]) => {
     setSelectedClientIds((prev) => {
-      const visibleIds = searchResults.map((c) => c.id);
-      const allSelected = visibleIds.every((id) => prev.has(id));
+      const ids = visibleIds || searchResults.map((c) => c.id);
+      const allSelected = ids.every((id) => prev.has(id));
       
       const next = new Set(prev);
       if (allSelected) {
-        visibleIds.forEach((id) => next.delete(id));
+        ids.forEach((id) => next.delete(id));
       } else {
-        visibleIds.forEach((id) => next.add(id));
+        ids.forEach((id) => next.add(id));
       }
       return next;
     });

@@ -12,7 +12,7 @@ interface LeadTableProps {
   savedIds: Set<string>;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
-  onToggleSelectAll?: () => void;
+  onToggleSelectAll?: (ids: string[]) => void;
   onBulkInvestigate?: () => void;
 }
 
@@ -247,7 +247,7 @@ export default function LeadTable({
                     <input
                       type="checkbox"
                       checked={filteredClients.length > 0 && filteredClients.every((c) => selectedIds.has(c.id))}
-                      onChange={onToggleSelectAll}
+                      onChange={() => onToggleSelectAll(filteredClients.map((c) => c.id))}
                       style={{ cursor: 'pointer', accentColor: 'var(--color-primary)', width: '16px', height: '16px' }}
                     />
                   </th>
