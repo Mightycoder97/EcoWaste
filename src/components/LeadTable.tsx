@@ -56,51 +56,123 @@ export default function LeadTable({
     return unique;
   }, [clients, searchTerm, typeFilter, statusFilter]);
 
-  // 2. Exportar a CSV
-  const handleExportCSV = () => {
+  // 2. Exportar a Excel (.xls estructurado y con estilos CSS para orden y diseño)
+  const handleExportExcel = () => {
     if (filteredClients.length === 0) return;
 
-    // Encabezados
-    const headers = [
-      'Nombre',
-      'Tipo',
-      'Direccion',
-      'Telefono',
-      'Correo',
-      'Sitio Web',
-      'Estado CRM',
-      'Volumen Residuos',
-      'Detalle Residuos',
-      'Notas'
-    ];
+    const typeLabels: Record<string, string> = {
+      hospital: 'Hospital',
+      clinic: 'Clínica',
+      laboratory: 'Laboratorio',
+      dentist: 'Dentista',
+      veterinary: 'Veterinaria',
+    };
 
-    // Mapear filas
-    const rows = filteredClients.map((c) => {
-      const typeLabel = c.type === 'hospital' ? 'Hospital' :
-                        c.type === 'clinic' ? 'Clínica' :
-                        c.type === 'laboratory' ? 'Laboratorio' :
-                        c.type === 'dentist' ? 'Dentista' : 'Veterinaria';
+    const rowsHtml = filteredClients
+      .map((c) => {
+        const typeLabel = typeLabels[c.type] || c.type;
+        const wasteVolume = c.waste_volume || 'sin clasificar';
+        
+        return `
+          <tr>
+            <td style="font-weight: bold; border: 1px solid #cbd5e1; padding: 8px;">${c.name}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px;">
+              <span class="type-badge type-${c.type}">${typeLabel}</span>
+            </td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; color: #475569;">${c.address || 'Sin dirección'}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px;">${c.phone || 'No registrado'}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px;">
+              ${c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : 'No registrado'}
+            </td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px;">
+              ${c.website ? `<a href="${c.website}" target="_blank">${c.website}</a>` : 'No registrado'}
+            </td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">
+              <span class="status-badge status-${c.status}">${c.status.toUpperCase()}</span>
+            </td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">
+              <span class="volume-badge volume-${c.waste_volume || 'none'}">${wasteVolume.toUpperCase()}</span>
+            </td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; color: #475569;">${c.waste_details || ''}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; color: #475569;">${c.notes || ''}</td>
+          </tr>
+        `;
+      })
+      .join('');
 
-      return [
-        `"${c.name.replace(/"/g, '""')}"`,
-        `"${typeLabel}"`,
-        `"${(c.address || '').replace(/"/g, '""')}"`,
-        `"${c.phone || ''}"`,
-        `"${c.email || ''}"`,
-        `"${c.website || ''}"`,
-        `"${c.status.toUpperCase()}"`,
-        `"${c.waste_volume || ''}"`,
-        `"${(c.waste_details || '').replace(/"/g, '""')}"`,
-        `"${(c.notes || '').replace(/"/g, '""')}"`
-      ];
-    });
+    const htmlTemplate = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+      <meta charset="utf-8"/>
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>Leads Calificados</x:Name>
+              <x:WorksheetOptions>
+                <x:DisplayGridlines/>
+              </x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+      <style>
+        table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
+        th { background-color: #10b981; color: #ffffff; font-weight: bold; border: 1px solid #94a3b8; padding: 10px; text-align: left; }
+        .type-badge { font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+        .type-hospital { color: #dc2626; background-color: #fee2e2; }
+        .type-clinic { color: #2563eb; background-color: #dbeafe; }
+        .type-laboratory { color: #059669; background-color: #d1fae5; }
+        .type-dentist { color: #d97706; background-color: #fef3c7; }
+        .type-veterinary { color: #7c3aed; background-color: #f3e8ff; }
+        
+        .status-badge { font-weight: bold; font-size: 9pt; padding: 2px 6px; border-radius: 4px; }
+        .status-nuevo { color: #475569; background-color: #f1f5f9; }
+        .status-contactado { color: #2563eb; background-color: #dbeafe; }
+        .status-negociacion { color: #d97706; background-color: #fef3c7; }
+        .status-ganado { color: #059669; background-color: #d1fae5; }
+        .status-descartado { color: #dc2626; background-color: #fee2e2; }
+        
+        .volume-badge { font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+        .volume-alto { color: #991b1b; background-color: #fca5a5; }
+        .volume-medio { color: #92400e; background-color: #fcd34d; }
+        .volume-bajo { color: #1e3a8a; background-color: #bfdbfe; }
+        .volume-none { color: #64748b; background-color: #f1f5f9; }
+      </style>
+      </head>
+      <body>
+        <h2>Lista de Leads Calificados - EcoWaste Finder</h2>
+        <p>Generado el: ${new Date().toLocaleString()}</p>
+        <table border="1" style="border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Dirección</th>
+              <th>Teléfono</th>
+              <th>Correo Electrónico</th>
+              <th>Sitio Web</th>
+              <th>Estado CRM</th>
+              <th>Volumen Residuos</th>
+              <th>Detalle Residuos</th>
+              <th>Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
 
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([htmlTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `leads_residuos_peligrosos_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute('download', `leads_residuos_peligrosos_${new Date().toISOString().slice(0, 10)}.xls`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -152,11 +224,11 @@ export default function LeadTable({
         </div>
 
         <button 
-          onClick={handleExportCSV} 
+          onClick={handleExportExcel} 
           className={styles.btnExport}
           disabled={filteredClients.length === 0}
         >
-          📤 Descargar Excel (CSV)
+          📤 Descargar Excel (.xls)
         </button>
       </div>
 
