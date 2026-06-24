@@ -99,6 +99,10 @@
   font-size: 0.75rem;
   color: var(--color-text-muted);
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .value {
@@ -312,4 +316,132 @@
     flex-direction: column;
   }
 }
+
+.sourceLink {
+  margin-left: 8px;
+  color: var(--color-primary-hover);
+  text-transform: none;
+  font-weight: normal;
+  font-size: 0.7rem;
+  text-decoration: underline;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.sourceLink:hover {
+  opacity: 0.8;
+}
+
+.sourceLinkHeader {
+  color: var(--color-primary-hover);
+  text-transform: none;
+  font-weight: normal;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.sourceLinkHeader:hover {
+  opacity: 0.8;
+}
+
+.sectionTitleWithSource {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badgeVerified {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  text-transform: none;
+  cursor: help;
+  position: relative;
+}
+
+.badgeHallucination {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  text-transform: none;
+  cursor: help;
+  position: relative;
+}
+
+.badgeUnverified {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  text-transform: none;
+  cursor: help;
+  position: relative;
+}
+
+.badgeVerified::after,
+.badgeHallucination::after,
+.badgeUnverified::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: normal;
+  width: 220px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 100;
+  text-align: center;
+}
+
+.badgeVerified:hover::after,
+.badgeHallucination:hover::after,
+.badgeUnverified:hover::after {
+  opacity: 1;
+}
+
 

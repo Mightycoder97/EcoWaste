@@ -22,7 +22,13 @@ export default function ResearchPanel({
   onUpdateClient,
   onSaveNotes,
 }: ResearchPanelProps) {
-  const [notes, setNotes] = useState(() => client.notes || '');
+  const getUserNotes = (fullNotes: string) => {
+    const idx = fullNotes.indexOf('[IA Síntesis]:');
+    if (idx === -1) return fullNotes.trim();
+    return fullNotes.substring(0, idx).trim();
+  };
+
+  const [notes, setNotes] = useState(() => getUserNotes(client.notes || ''));
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [logs, setLogs] = useState<TerminalLog[]>([]);
   const terminalEndRef = useRef<HTMLDivElement>(null);
@@ -89,7 +95,7 @@ export default function ResearchPanel({
       
       // Actualizar el cliente en el frontend
       onUpdateClient(data.client);
-      setNotes(data.client.notes || '');
+      setNotes(getUserNotes(data.client.notes || ''));
 
       await new Promise((r) => setTimeout(r, 500));
       addLog('✅ Investigación completada de forma exitosa.');
@@ -107,7 +113,14 @@ export default function ResearchPanel({
   };
 
   const handleSaveNotesClick = () => {
-    onSaveNotes(client.id, notes);
+    // Reconstruir las notas completas con los bloques de IA existentes si es que existen
+    let fullNotes = notes.trim();
+    const iaSynthesisIdx = client.notes?.indexOf('[IA Síntesis]:');
+    if (iaSynthesisIdx !== undefined && iaSynthesisIdx !== -1) {
+      const iaPart = client.notes!.substring(iaSynthesisIdx);
+      fullNotes = fullNotes ? `${fullNotes}\n\n${iaPart}` : iaPart;
+    }
+    onSaveNotes(client.id, fullNotes);
     alert('Notas guardadas correctamente.');
   };
 
@@ -122,14 +135,91 @@ export default function ResearchPanel({
     }
   };
 
-  // Extraer síntesis si existe en las notas
-  const hasSynthesis = notes.includes('[IA Síntesis]:');
-  const synthesisText = hasSynthesis 
-    ? notes.split('[IA Síntesis]:')[1]?.trim()
-    : null;
+  // Extraer síntesis, fuentes y auditoría desde las notas completas del cliente
+  const fullNotes = client.notes || '';
+  const hasSynthesis = fullNotes.includes('[IA Síntesis]:');
   
-  // Limpiar notas para no mostrar la síntesis en la caja editable si no se desea,
-  // pero para simplificar, permitimos editar todo.
+  let synthesisText: string | null = null;
+  let sources: {
+    phone?: string;
+    email?: string;
+    website?: string;
+    waste_details?: string;
+    key_contacts?: string;
+  } = {};
+  let audit: {
+    [key: string]: {
+      status: 'verificado' | 'alucinacion' | 'no_disponible';
+      explanation: string;
+    };
+  } = {};
+
+  if (hasSynthesis) {
+    const synthesisParts = fullNotes.split('[IA Síntesis]:');
+    let iaPart = synthesisParts[1] || '';
+    
+    // Extraer IA Auditoria si existe
+    if (iaPart.includes('[IA Auditoria]:')) {
+      const auditParts = iaPart.split('[IA Auditoria]:');
+      const auditJsonText = auditParts[1]?.trim();
+      try {
+        audit = JSON.parse(auditJsonText || '{}');
+      } catch (e) {
+        console.error('Error parsing IA Auditoria:', e);
+      }
+      iaPart = auditParts[0] || '';
+    }
+
+    // Extraer IA Fuentes si existe
+    if (iaPart.includes('[IA Fuentes]:')) {
+      const sourcesParts = iaPart.split('[IA Fuentes]:');
+      const sourcesJsonText = sourcesParts[1]?.trim();
+      try {
+        sources = JSON.parse(sourcesJsonText || '{}');
+      } catch (e) {
+        console.error('Error parsing IA Fuentes:', e);
+      }
+      synthesisText = sourcesParts[0]?.trim();
+    } else {
+      synthesisText = iaPart.trim();
+    }
+  }
+
+  const renderVerificationBadge = (fieldKey: string) => {
+    const fieldAudit = audit[fieldKey];
+    if (!fieldAudit) return null;
+
+    const { status, explanation } = fieldAudit;
+    if (status === 'verificado') {
+      return (
+        <span 
+          className={styles.badgeVerified} 
+          data-tooltip={explanation || 'Información verificada por el agente auditor.'}
+        >
+          ✓ Verificado
+        </span>
+      );
+    } else if (status === 'alucinacion') {
+      return (
+        <span 
+          className={styles.badgeHallucination} 
+          data-tooltip={explanation || 'Alucinación o inconsistencia detectada en la auditoría.'}
+        >
+          ⚠️ Alucinación
+        </span>
+      );
+    } else if (status === 'no_disponible') {
+      return (
+        <span 
+          className={styles.badgeUnverified} 
+          data-tooltip={explanation || 'No se encontró información en las fuentes.'}
+        >
+          ∅ No Disp.
+        </span>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className={styles.drawerBackdrop} onClick={onClose}>
@@ -160,11 +250,39 @@ export default function ResearchPanel({
                 <div className={styles.value}>{client.address || 'Sin dirección registrada'}</div>
               </div>
               <div className={styles.infoBlock}>
-                <div className={styles.label}>Teléfono</div>
+                <div className={styles.label}>
+                  <span>Teléfono</span>
+                  {renderVerificationBadge('phone')}
+                  {sources.phone && (
+                    <a
+                      href={sources.phone}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.sourceLink}
+                      title={`Fuente: ${sources.phone}`}
+                    >
+                      🔗 Fuente
+                    </a>
+                  )}
+                </div>
                 <div className={styles.value}>{client.phone || 'No registrado'}</div>
               </div>
               <div className={styles.infoBlock}>
-                <div className={styles.label}>Correo Electrónico</div>
+                <div className={styles.label}>
+                  <span>Correo Electrónico</span>
+                  {renderVerificationBadge('email')}
+                  {sources.email && (
+                    <a
+                      href={sources.email}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.sourceLink}
+                      title={`Fuente: ${sources.email}`}
+                    >
+                      🔗 Fuente
+                    </a>
+                  )}
+                </div>
                 <div className={styles.value}>
                   {client.email ? (
                     <a href={`mailto:${client.email}`} style={{ color: 'var(--color-primary-hover)' }}>
@@ -175,7 +293,21 @@ export default function ResearchPanel({
               </div>
               {client.website && (
                 <div className={styles.infoBlock} style={{ gridColumn: 'span 2' }}>
-                  <div className={styles.label}>Sitio Web</div>
+                  <div className={styles.label}>
+                    <span>Sitio Web</span>
+                    {renderVerificationBadge('website')}
+                    {sources.website && (
+                      <a
+                        href={sources.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.sourceLink}
+                        title={`Fuente: ${sources.website}`}
+                      >
+                        🔗 Fuente
+                      </a>
+                    )}
+                  </div>
                   <div className={styles.value}>
                     <a href={client.website} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary-hover)' }}>
                       {client.website}
@@ -211,7 +343,21 @@ export default function ResearchPanel({
                 </div>
               </div>
               <div className={styles.infoBlock} style={{ gridColumn: 'span 2' }}>
-                <div className={styles.label}>Detalle de Residuos Generados</div>
+                <div className={styles.label}>
+                  <span>Detalle de Residuos Generados</span>
+                  {renderVerificationBadge('waste_details')}
+                  {sources.waste_details && (
+                    <a
+                      href={sources.waste_details}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.sourceLink}
+                      title={`Fuente: ${sources.waste_details}`}
+                    >
+                      🔗 Fuente
+                    </a>
+                  )}
+                </div>
                 <div className={styles.value} style={{ fontWeight: 'normal', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
                   {client.waste_details || 'Ejecuta el análisis de DeepSeek V4 para calificar sus desechos clínicos.'}
                 </div>
@@ -221,7 +367,23 @@ export default function ResearchPanel({
 
           {/* Contactos Clave */}
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Contactos Clave (Encontrados por IA)</div>
+            <div className={styles.sectionTitleWithSource}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>Contactos Clave (Encontrados por IA)</span>
+                {renderVerificationBadge('key_contacts')}
+              </div>
+              {sources.key_contacts && (
+                <a
+                  href={sources.key_contacts}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.sourceLinkHeader}
+                  title={`Fuente: ${sources.key_contacts}`}
+                >
+                  🔗 Ver Fuente
+                </a>
+              )}
+            </div>
             {client.key_contacts && client.key_contacts.length > 0 ? (
               <>
                 <table className={`${styles.table} ${styles.desktopTable}`}>

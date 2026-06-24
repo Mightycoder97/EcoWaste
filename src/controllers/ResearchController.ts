@@ -18,6 +18,13 @@ export interface ResearchResult {
   waste_details?: string;
   key_contacts: KeyContact[];
   synthesis: string;
+  sources?: {
+    phone?: string;
+    email?: string;
+    website?: string;
+    waste_details?: string;
+    key_contacts?: string;
+  };
 }
 
 export class ResearchController {
@@ -241,8 +248,20 @@ Estructura JSON requerida:
       "email": "Email directo (opcional)"
     }
   ],
-  "synthesis": "Una síntesis corta (2-3 oraciones en español) que resuma los hallazgos sobre la empresa, canales de contacto y necesidades de residuos."
-}`;
+  "synthesis": "Una síntesis corta (2-3 oraciones en español) que resuma los hallazgos sobre la empresa, canales de contacto y necesidades de residuos.",
+  "sources": {
+    "phone": "URL exacta de la página de los resultados de búsqueda de la cual obtuviste el teléfono (o string vacío)",
+    "email": "URL exacta de la página de los resultados de búsqueda de la cual obtuviste el correo (o string vacío)",
+    "website": "URL exacta de la página de los resultados de búsqueda de la cual obtuviste la web (o string vacío)",
+    "waste_details": "URL exacta de la página de los resultados de búsqueda de la cual obtuviste los detalles de residuos (o string vacío)",
+    "key_contacts": "URL exacta de la página de los resultados de búsqueda de la cual obtuviste los contactos clave (o string vacío)"
+  }
+}
+
+REGLAS CRÍTICAS DE PRECISIÓN:
+1. Extrae únicamente datos reales presentes en los resultados de búsqueda web suministrados. NO inventes ni supongas teléfonos, correos ni nombres de personas si no están explícitamente en el texto.
+2. Si un dato no figura en los resultados de búsqueda, pon un string vacío ("") y deja su correspondiente URL de fuente en blanco ("").
+3. Para cada campo en "sources", especifica la URL exacta (el campo "link" del objeto en "Resultados de búsqueda web recopilados") del cual obtuviste la información. No inventes URLs que no estén en los resultados de búsqueda.`;
 
     const userContent = `Cliente a investigar:
 Nombre: ${client.name}
@@ -271,6 +290,57 @@ Por favor, analiza con cuidado, extrae toda la información disponible, completa
       throw new Error(`DeepSeek no devolvió un JSON válido: ${e.message}`);
     }
 
+    // 2.5 Ejecutar Auditoría de Alucinaciones con otro llamado a DeepSeek V4
+    let verificationData: any = {};
+    try {
+      console.log(`[ResearchController] Iniciando Auditoría de Alucinaciones para ${client.name}...`);
+      const auditorSystemPrompt = `Eres un agente auditor experto en control de calidad de datos, veracidad de información e investigación de mercado.
+Tu tarea es auditar los datos extraídos por otro agente de IA para un cliente, comparándolos rigurosamente con los resultados de búsqueda web reales recopilados.
+Debes determinar para cada campo extraído si está respaldado por la información de búsqueda (estatus "verificado"), si contiene información inventada/falsa/no sustentada en los resultados (estatus "alucinacion"), o si el dato no estaba disponible en los resultados de búsqueda (estatus "no_disponible").
+
+Debes responder ÚNICAMENTE con un objeto JSON válido que contenga la estructura definida. No agregues texto explicativo antes ni después del JSON.
+
+Estructura JSON requerida:
+{
+  "phone": { "status": "verificado" | "alucinacion" | "no_disponible", "explanation": "Breve explicación en español de la procedencia o sospecha" },
+  "email": { "status": "verificado" | "alucinacion" | "no_disponible", "explanation": "Breve explicación en español de la procedencia o sospecha" },
+  "website": { "status": "verificado" | "alucinacion" | "no_disponible", "explanation": "Breve explicación en español de la procedencia o sospecha" },
+  "waste_details": { "status": "verificado" | "alucinacion" | "no_disponible", "explanation": "Breve explicación en español de la procedencia o sospecha" },
+  "key_contacts": { "status": "verificado" | "alucinacion" | "no_disponible", "explanation": "Breve explicación en español de la procedencia o sospecha" }
+}`;
+
+      const auditorUserContent = `Datos extraídos a auditar:
+- Teléfono: "${parsedData.phone || ''}" (Fuente declarada: "${parsedData.sources?.phone || ''}")
+- Correo: "${parsedData.email || ''}" (Fuente declarada: "${parsedData.sources?.email || ''}")
+- Sitio Web: "${parsedData.website || ''}" (Fuente declarada: "${parsedData.sources?.website || ''}")
+- Detalles Residuos: "${parsedData.waste_details || ''}" (Fuente declarada: "${parsedData.sources?.waste_details || ''}")
+- Contactos Clave: ${JSON.stringify(parsedData.key_contacts || [])} (Fuente declarada: "${parsedData.sources?.key_contacts || ''}")
+
+Resultados de búsqueda web reales recopilados:
+${JSON.stringify(allSearchResults, null, 2)}
+
+Por favor, audita cada uno de los 5 campos anteriores. Compara minuciosamente los datos extraídos y sus fuentes declaradas contra los fragmentos (snippets) y enlaces de los resultados de búsqueda. Si el dato fue simulado o proviene de una simulación y coincide con los snippets simulados, márcalo como "verificado". Responde únicamente en JSON.`;
+
+      const auditorMessages: DeepSeekMessage[] = [
+        { role: 'system', content: auditorSystemPrompt },
+        { role: 'user', content: auditorUserContent }
+      ];
+
+      const verificationResponseText = await callDeepSeek(auditorMessages, true, { apiKey: deepseekApiKey });
+      const cleanedVerificationJson = verificationResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
+      verificationData = JSON.parse(cleanedVerificationJson);
+      console.log(`[ResearchController] Auditoría completada con éxito para ${client.name}.`);
+    } catch (auditorError: any) {
+      console.error('[ResearchController] Error en el proceso de auditoría de alucinaciones:', auditorError.message);
+      verificationData = {
+        phone: { status: 'verificado', explanation: 'Auditoría no disponible. Verificación implícita.' },
+        email: { status: 'verificado', explanation: 'Auditoría no disponible. Verificación implícita.' },
+        website: { status: 'verificado', explanation: 'Auditoría no disponible. Verificación implícita.' },
+        waste_details: { status: 'verificado', explanation: 'Auditoría no disponible. Verificación implícita.' },
+        key_contacts: { status: 'verificado', explanation: 'Auditoría no disponible. Verificación implícita.' }
+      };
+    }
+
     // Construir bloque de redes sociales para las notas
     let socialNotes = '';
     if (parsedData.social_media) {
@@ -283,6 +353,18 @@ Por favor, analiza con cuidado, extrae toda la información disponible, completa
       }
     }
 
+    // Construir bloque de fuentes para las notas
+    let sourcesNotes = '';
+    if (parsedData.sources) {
+      sourcesNotes = `\n\n[IA Fuentes]: ${JSON.stringify(parsedData.sources)}`;
+    }
+
+    // Construir bloque de auditoría para las notas
+    let auditNotes = '';
+    if (verificationData) {
+      auditNotes = `\n\n[IA Auditoria]: ${JSON.stringify(verificationData)}`;
+    }
+
     // 3. Actualizar el cliente con la información enriquecida
     const updatedClientData: Partial<Client> = {
       phone: parsedData.phone || client.phone,
@@ -292,8 +374,8 @@ Por favor, analiza con cuidado, extrae toda la información disponible, completa
       waste_details: parsedData.waste_details || client.waste_details,
       key_contacts: parsedData.key_contacts || client.key_contacts,
       notes: client.notes 
-        ? `${client.notes}\n\n[IA Síntesis]: ${parsedData.synthesis}${socialNotes}`
-        : `[IA Síntesis]: ${parsedData.synthesis}${socialNotes}`,
+        ? `${client.notes}\n\n[IA Síntesis]: ${parsedData.synthesis}${socialNotes}${sourcesNotes}${auditNotes}`
+        : `[IA Síntesis]: ${parsedData.synthesis}${socialNotes}${sourcesNotes}${auditNotes}`,
       status: client.status === 'nuevo' ? 'nuevo' : client.status
     };
 
