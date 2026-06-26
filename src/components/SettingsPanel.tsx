@@ -8,6 +8,7 @@ interface SettingsPanelProps {
 }
 
 export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) {
+  const [geminiKey, setGeminiKey] = useState('');
   const [deepseekKey, setDeepseekKey] = useState('');
   const [serperKey, setSerperKey] = useState('');
   const [supabaseUrl, setSupabaseUrl] = useState('');
@@ -20,11 +21,13 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     // Load settings from localStorage
+    const savedGeminiKey = localStorage.getItem('GEMINI_API_KEY') || '';
     const savedDeepseekKey = localStorage.getItem('DS_API_KEY') || 'sk-f9a0f8949ddd4e15a9445a1813f70942';
     const savedSerperKey = localStorage.getItem('SERPER_API_KEY') || '';
     const savedSupabaseUrl = localStorage.getItem('SB_URL') || '';
     const savedSupabaseKey = localStorage.getItem('SB_ANON_KEY') || '';
 
+    setGeminiKey(savedGeminiKey);
     setDeepseekKey(savedDeepseekKey);
     setSerperKey(savedSerperKey);
     setSupabaseUrl(savedSupabaseUrl);
@@ -47,6 +50,7 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
     e.preventDefault();
     
     // Save to localStorage
+    localStorage.setItem('GEMINI_API_KEY', geminiKey.trim());
     localStorage.setItem('DS_API_KEY', deepseekKey.trim());
     localStorage.setItem('SERPER_API_KEY', serperKey.trim());
     localStorage.setItem('SB_URL', supabaseUrl.trim());
@@ -102,9 +106,26 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
         )}
 
         <div className={styles.formGroup}>
+          <label htmlFor="gemini-key">
+            Google Gemini API Key
+            <span className={styles.badgeOptional}>Recomendado (Búsqueda Nativa)</span>
+          </label>
+          <input
+            id="gemini-key"
+            type="password"
+            placeholder="Ingresa tu clave de API de Gemini (AIzaSy...)"
+            value={geminiKey}
+            onChange={(e) => setGeminiKey(e.target.value)}
+          />
+          <p className={styles.inputHelp}>
+            Se utiliza para realizar la investigación nativa con Google Search Grounding en un solo agente. Si se configura, este modelo reemplazará el flujo de DeepSeek + Serper.
+          </p>
+        </div>
+
+        <div className={styles.formGroup}>
           <label htmlFor="deepseek-key">
             DeepSeek V4 API Key
-            <span className={styles.badgeRequired}>Requerido para IA</span>
+            <span className={styles.badgeOptional}>Opcional (Backup)</span>
           </label>
           <input
             id="deepseek-key"
@@ -112,10 +133,9 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
             placeholder="Ingresa tu clave de API de DeepSeek (sk-...)"
             value={deepseekKey}
             onChange={(e) => setDeepseekKey(e.target.value)}
-            required
           />
           <p className={styles.inputHelp}>
-            Se utiliza para analizar los resultados de búsqueda web de los clientes, estimar el volumen de residuos peligrosos y sintetizar la información.
+            Se utiliza como modelo de respaldo para analizar los resultados de búsqueda web de los clientes, estimar el volumen de residuos peligrosos y sintetizar la información.
           </p>
         </div>
 

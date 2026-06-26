@@ -243,7 +243,18 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json(uniqueClients);
+    // Alertar si Google Places falló o no está configurado
+    let googleMapsAlert: string | null = null;
+    if (googleFailed) {
+      googleMapsAlert = googleErrorMsg;
+    } else if (googleKey.trim() === '') {
+      googleMapsAlert = 'Google Maps API Key no configurada en el servidor. Revirtiendo a OpenStreetMap.';
+    }
+
+    return NextResponse.json({
+      clients: uniqueClients,
+      googleAlert: googleMapsAlert
+    });
   } catch (error: any) {
     console.error('[SearchAPI] Error en búsqueda Overpass:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -419,3 +419,57 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.alertBanner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: fade-in 0.3s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.alertIcon {
+  font-size: 1.2rem;
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.alertContent {
+  color: #f8fafc;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.alertContent strong {
+  color: #f87171;
+  font-weight: 600;
+}
+
+.alertCloseBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.alertCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}

@@ -24,6 +24,7 @@ export default function Dashboard() {
   const [isLoadingSearch, setIsLoadingSearch] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [activeSearchEngine, setActiveSearchEngine] = useState<string>('');
+  const [googleMapsAlert, setGoogleMapsAlert] = useState<string | null>(null);
 
   // Bulk selection and progress states
   const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(new Set());
@@ -394,6 +395,7 @@ export default function Dashboard() {
     
     setBulkProgress({ current: 0, total, activeName: '' });
     
+    const geminiKey = localStorage.getItem('GEMINI_API_KEY') || '';
     const dsKey = localStorage.getItem('DS_API_KEY') || 'sk-f9a0f8949ddd4e15a9445a1813f70942';
     const spKey = localStorage.getItem('SERPER_API_KEY') || '';
 
@@ -462,6 +464,7 @@ export default function Dashboard() {
           body: JSON.stringify({
             client: crmClient,
             keys: {
+              geminiKey,
               deepseekKey: dsKey,
               serperKey: spKey,
             },
@@ -530,9 +533,11 @@ export default function Dashboard() {
         setSearchResults(mergedResults);
         setActiveSearchEngine('Google Places (Cliente)');
         setIsLoadingSearch(false);
+        setGoogleMapsAlert(null);
         return;
       } catch (googleError: any) {
         console.warn('[Dashboard] Google Places falló en cliente, recurriendo a Overpass API:', googleError.message);
+        setGoogleMapsAlert(`Google Places en el cliente falló: ${googleError.message}`);
       }
     }
 
@@ -556,7 +561,15 @@ export default function Dashboard() {
         throw new Error('Error al ejecutar la búsqueda de respaldo.');
       }
 
-      const data: Client[] = await response.json();
+      const resJson = await response.json();
+      const data: Client[] = Array.isArray(resJson) ? resJson : resJson.clients;
+      const googleAlert = Array.isArray(resJson) ? null : resJson.googleAlert;
+
+      if (googleAlert) {
+        setGoogleMapsAlert(`Google Places en el servidor falló: ${googleAlert}`);
+      } else if (!googleMapsAlert && !Array.isArray(resJson)) {
+        setGoogleMapsAlert(null);
+      }
       
       const mergedResults = data.map((osmClient) => {
         const saved = savedClients.find((sc) => sc.name.toLowerCase() === osmClient.name.toLowerCase() || sc.id === osmClient.id);
@@ -567,7 +580,7 @@ export default function Dashboard() {
       });
 
       setSearchResults(mergedResults);
-      setActiveSearchEngine('OpenStreetMap (Respaldo)');
+      setActiveSearchEngine(googleAlert ? 'OpenStreetMap (Respaldo)' : 'Google Places (Servidor)');
     } catch (error) {
       const err = error as Error;
       alert(`Error en la búsqueda: ${err.message}`);
@@ -803,6 +816,16 @@ export default function Dashboard() {
                 }}>
                   {activeSearchEngine.includes('Google') ? '🟢' : '🟡'} {activeSearchEngine}
                 </span>
+              </div>
+            )}
+
+            {googleMapsAlert && (
+              <div className={styles.alertBanner}>
+                <span className={styles.alertIcon}>⚠️</span>
+                <div className={styles.alertContent}>
+                  <strong>Alerta Google Maps:</strong> {googleMapsAlert}
+                </div>
+                <button className={styles.alertCloseBtn} onClick={() => setGoogleMapsAlert(null)}>✕</button>
               </div>
             )}
 

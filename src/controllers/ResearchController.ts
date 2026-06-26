@@ -1,4 +1,5 @@
 import { callDeepSeek, DeepSeekMessage } from '@/lib/deepseekClient';
+import { callGemini } from '@/lib/geminiClient';
 import { ClientModel } from '@/models/ClientModel';
 import { ResearchModel } from '@/models/ResearchModel';
 import { Client, ResearchLog, KeyContact } from '@/models/db';
@@ -168,13 +169,166 @@ export class ResearchController {
    */
   static async performResearch(
     client: Client,
-    keys?: { deepseekKey?: string; serperKey?: string }
+    keys?: { deepseekKey?: string; serperKey?: string; geminiKey?: string }
   ): Promise<{ client: Client; log: ResearchLog }> {
+    const geminiApiKey = keys?.geminiKey || process.env.GEMINI_API_KEY;
     const deepseekApiKey = keys?.deepseekKey || process.env.DEEPSEEK_API_KEY;
     const serperApiKey = keys?.serperKey || defaultSerperKey;
 
+    if (geminiApiKey) {
+      console.log(`[ResearchController] Iniciando investigación con Agente Único Gemini para ${client.name}...`);
+      
+      const geminiSystemPrompt = `Eres un asistente experto en investigación de mercado, fiscalización ambiental y gestión de residuos peligrosos.
+Tu objetivo es investigar en internet un establecimiento médico para extraer información de contacto precisa y calificar su generación de residuos peligrosos.
+Debes responder ÚNICAMENTE con un objeto JSON válido que contenga la estructura definida. No agregues texto explicativo antes ni después del JSON.
+
+Estructura JSON requerida:
+{
+  "phone": "Teléfono de contacto principal (debe ser un string)",
+  "email": "Correo electrónico de contacto (debe ser un string)",
+  "website": "URL del sitio web oficial",
+  "social_media": {
+    "facebook": "Enlace oficial a la página de Facebook si se encuentra (o un string vacío)",
+    "instagram": "Enlace oficial a la página de Instagram si se encuentra (o un string vacío)",
+    "linkedin": "Enlace oficial a la página de LinkedIn si se encuentra (o un string vacío)"
+  },
+  "waste_volume": "alto" | "medio" | "bajo" (estimación del volumen según su tamaño y especialidad),
+  "waste_details": "Detalles específicos del tipo de residuos peligrosos generados (ej: cortopunzantes, infecciosos, reactivos químicos, fármacos vencidos, etc.)",
+  "key_contacts": [
+    {
+      "name": "Nombre de persona clave (director, jefe de compras, administrador, etc.)",
+      "role": "Cargo o función",
+      "phone": "Teléfono directo (opcional)",
+      "email": "Email directo (opcional)"
+    }
+  ],
+  "synthesis": "Una síntesis corta (2-3 oraciones en español) que resuma los hallazgos sobre la empresa, canales de contacto y necesidades de residuos.",
+  "sources": {
+    "phone": "URL exacta de donde obtuviste el teléfono (o string vacío)",
+    "email": "URL exacta de donde obtuviste el correo (o string vacío)",
+    "website": "URL exacta de donde obtuviste el sitio web oficial (o string vacío)",
+    "waste_details": "URL exacta de donde obtuviste la información de residuos (o string vacío)",
+    "key_contacts": "URL exacta de donde obtuviste los nombres de contacto clave (o string vacío)"
+  }
+}
+
+REGLAS CRÍTICAS DE PRECISIÓN:
+1. Utiliza la herramienta de búsqueda de Google para buscar información real sobre el cliente en internet.
+2. Extrae únicamente datos reales encontrados en la web. NO inventes ni supongas teléfonos, correos ni nombres que no figuren explícitamente en los resultados de búsqueda. Si no hay información sobre un campo, déjalo vacío ("").
+3. Para cada campo en "sources", debes proveer la URL exacta de la cual extrajiste esa información.`;
+
+      const geminiUserContent = `Cliente a investigar:
+Nombre: ${client.name}
+Tipo: ${client.type}
+Dirección: ${client.address || 'No especificada'}
+
+Por favor, realiza las búsquedas necesarias en Google Search, extrae toda la información disponible, completa los campos requeridos y realiza la síntesis. Responde solo en JSON.`;
+
+      try {
+        const geminiRes = await callGemini(geminiSystemPrompt, geminiUserContent, true, { apiKey: geminiApiKey });
+        
+        let parsedData: ResearchResult;
+        try {
+          const cleanedJson = geminiRes.text.replace(/```json/g, '').replace(/```/g, '').trim();
+          parsedData = JSON.parse(cleanedJson);
+        } catch (e: any) {
+          console.error('[ResearchController] Error al parsear JSON retornado por Gemini. Respuesta cruda:', geminiRes.text);
+          throw new Error(`Gemini no devolvió un JSON válido: ${e.message}`);
+        }
+
+        // Construir verificación basada en grounding
+        const verificationData = {
+          phone: { 
+            status: parsedData.phone ? 'verificado' : 'no_disponible', 
+            explanation: parsedData.phone ? `Verificado en la fuente: ${parsedData.sources?.phone || 'Búsqueda de Google'}` : 'Teléfono no encontrado en la búsqueda'
+          },
+          email: { 
+            status: parsedData.email ? 'verificado' : 'no_disponible', 
+            explanation: parsedData.email ? `Verificado en la fuente: ${parsedData.sources?.email || 'Búsqueda de Google'}` : 'Correo no encontrado en la búsqueda'
+          },
+          website: { 
+            status: parsedData.website ? 'verificado' : 'no_disponible', 
+            explanation: parsedData.website ? `Verificado en la fuente: ${parsedData.sources?.website || 'Búsqueda de Google'}` : 'Sitio web no encontrado en la búsqueda'
+          },
+          waste_details: { 
+            status: parsedData.waste_details ? 'verificado' : 'no_disponible', 
+            explanation: parsedData.waste_details ? `Verificado en la fuente: ${parsedData.sources?.waste_details || 'Búsqueda de Google'}` : 'Detalles de residuos no encontrados en la búsqueda'
+          },
+          key_contacts: { 
+            status: parsedData.key_contacts && parsedData.key_contacts.length > 0 ? 'verificado' : 'no_disponible', 
+            explanation: parsedData.key_contacts && parsedData.key_contacts.length > 0 ? `Verificado en la fuente: ${parsedData.sources?.key_contacts || 'Búsqueda de Google'}` : 'Contactos clave no encontrados en la búsqueda'
+          }
+        };
+
+        // Construir bloques de texto de redes, fuentes y auditoría
+        let socialNotes = '';
+        if (parsedData.social_media) {
+          const { facebook, instagram, linkedin } = parsedData.social_media;
+          if (facebook || instagram || linkedin) {
+            socialNotes = `\n\n[Redes Sociales]:` +
+              (facebook ? `\n- Facebook: ${facebook}` : '') +
+              (instagram ? `\n- Instagram: ${instagram}` : '') +
+              (linkedin ? `\n- LinkedIn: ${linkedin}` : '');
+          }
+        }
+
+        let sourcesNotes = '';
+        if (parsedData.sources) {
+          sourcesNotes = `\n\n[IA Fuentes]: ${JSON.stringify(parsedData.sources)}`;
+        }
+
+        let auditNotes = `\n\n[IA Auditoria]: ${JSON.stringify(verificationData)}`;
+
+        const updatedClientData: Partial<Client> = {
+          phone: parsedData.phone || client.phone,
+          email: parsedData.email || client.email,
+          website: parsedData.website || client.website,
+          waste_volume: parsedData.waste_volume || client.waste_volume,
+          waste_details: parsedData.waste_details || client.waste_details,
+          key_contacts: parsedData.key_contacts || client.key_contacts,
+          notes: client.notes 
+            ? `${client.notes}\n\n[IA Síntesis]: ${parsedData.synthesis}${socialNotes}${sourcesNotes}${auditNotes}`
+            : `[IA Síntesis]: ${parsedData.synthesis}${socialNotes}${sourcesNotes}${auditNotes}`,
+          status: client.status === 'nuevo' ? 'nuevo' : client.status
+        };
+
+        let savedClient = client;
+        let savedLog: ResearchLog = {
+          id: '',
+          client_id: client.id,
+          search_queries: geminiRes.groundingMetadata?.webSearchQueries || ['Búsqueda nativa de Google'],
+          raw_search_results: (geminiRes.groundingMetadata?.groundingChunks || []).map((chunk: any) => ({
+            title: chunk.web?.title || 'Fuente de Google',
+            link: chunk.web?.uri || '',
+            snippet: 'Extraído nativamente mediante Google Search Grounding.'
+          })),
+          deepseek_response: geminiRes.text
+        };
+
+        try {
+          savedClient = await ClientModel.update(client.id, updatedClientData);
+          savedLog = await ResearchModel.create({
+            client_id: client.id,
+            search_queries: savedLog.search_queries,
+            raw_search_results: savedLog.raw_search_results,
+            deepseek_response: geminiRes.text
+          });
+        } catch (dbError: any) {
+          console.warn('[ResearchController] Fallo al escribir en Supabase. Modo memoria local:', dbError.message);
+          savedClient = { ...client, ...updatedClientData };
+        }
+
+        return {
+          client: savedClient,
+          log: savedLog
+        };
+      } catch (geminiError: any) {
+        console.error('[ResearchController] Falló investigación con Gemini, recurriendo a DeepSeek:', geminiError.message);
+      }
+    }
+
     if (!deepseekApiKey) {
-      throw new Error('No se ha configurado la API Key de DeepSeek para el análisis.');
+      throw new Error('No se ha configurado la API Key de DeepSeek para el análisis o falló la conexión con Gemini.');
     }
 
     // Si el cliente proviene de Google Places, obtener detalles (teléfono y web oficial) usando la API de Google

@@ -47,26 +47,30 @@ export default function ResearchPanel({
     setIsAnalyzing(true);
     setLogs([]);
     
+    const geminiKey = localStorage.getItem('GEMINI_API_KEY') || '';
+    const dsKey = localStorage.getItem('DS_API_KEY') || 'sk-f9a0f8949ddd4e15a9445a1813f70942';
+    const spKey = localStorage.getItem('SERPER_API_KEY') || '';
+
     addLog('🔍 Iniciando módulo de recolección de datos...');
-    
-    // Simular pasos iniciales de recolección de datos para experiencia visual fluida
     await new Promise((r) => setTimeout(r, 800));
-    addLog(`🌐 Preparando términos de búsqueda para "${client.name}"...`);
     
-    await new Promise((r) => setTimeout(r, 800));
-    addLog('🕸️ Consultando bases de datos web e indexadores (Serper Search)...');
-    
-    await new Promise((r) => setTimeout(r, 800));
-    addLog('📄 Analizando metadatos y extrayendo fragmentos de texto relevantes...');
-    
-    await new Promise((r) => setTimeout(r, 800));
-    addLog('🤖 Conectando con servidor LLM DeepSeek V4 (deepseek-chat)...');
+    if (geminiKey) {
+      addLog(`🌐 Preparando términos de búsqueda para "${client.name}"...`);
+      await new Promise((r) => setTimeout(r, 800));
+      addLog('🕸️ Consultando Google Search mediante Grounding nativo...');
+      await new Promise((r) => setTimeout(r, 800));
+      addLog('🤖 Conectando con servidor LLM Google Gemini (gemini-2.5-flash)...');
+    } else {
+      addLog(`🌐 Preparando términos de búsqueda para "${client.name}"...`);
+      await new Promise((r) => setTimeout(r, 800));
+      addLog('🕸️ Consultando bases de datos web e indexadores (Serper Search)...');
+      await new Promise((r) => setTimeout(r, 800));
+      addLog('📄 Analizando metadatos y extrayendo fragmentos de texto relevantes...');
+      await new Promise((r) => setTimeout(r, 800));
+      addLog('🤖 Conectando con servidor LLM DeepSeek V4 (deepseek-chat)...');
+    }
     
     try {
-      // Obtener credenciales desde localStorage para pasar al backend
-      const dsKey = localStorage.getItem('DS_API_KEY') || 'sk-f9a0f8949ddd4e15a9445a1813f70942';
-      const spKey = localStorage.getItem('SERPER_API_KEY') || '';
-
       const response = await fetch('/api/research', {
         method: 'POST',
         headers: {
@@ -75,6 +79,7 @@ export default function ResearchPanel({
         body: JSON.stringify({
           client,
           keys: {
+            geminiKey,
             deepseekKey: dsKey,
             serperKey: spKey,
           },
@@ -88,7 +93,11 @@ export default function ResearchPanel({
 
       const data = await response.json();
       
-      addLog('✨ DeepSeek V4 completó la extracción y síntesis de datos.');
+      if (geminiKey) {
+        addLog('✨ Google Gemini completó la extracción y síntesis de datos.');
+      } else {
+        addLog('✨ DeepSeek V4 completó la extracción y síntesis de datos.');
+      }
       await new Promise((r) => setTimeout(r, 500));
       
       addLog('💾 Guardando datos enriquecidos en base de datos...');
