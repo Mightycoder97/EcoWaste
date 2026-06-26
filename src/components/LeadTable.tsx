@@ -204,7 +204,8 @@ export default function LeadTable({
             placeholder="Buscar por nombre o dirección..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-9 pl-9 pr-3 rounded-md border border-input bg-transparent text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="w-full h-9 pr-3 rounded-md border border-input bg-transparent text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            style={{ paddingLeft: '2.25rem' }}
           />
         </div>
 
@@ -269,10 +270,8 @@ export default function LeadTable({
                   </th>
                 )}
                 <th className="px-4 py-3">Establecimiento</th>
-                <th className="px-4 py-3">Tipo</th>
                 <th className="px-4 py-3">Ubicación</th>
                 <th className="px-4 py-3">Contacto</th>
-                <th className="px-4 py-3">Volumen</th>
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
@@ -299,7 +298,7 @@ export default function LeadTable({
                     )}
                     <td className="px-4 py-3.5">
                       <div className="font-semibold text-foreground leading-snug">{client.name}</div>
-                      <div className="mt-1">
+                      <div className="mt-1.5 flex flex-wrap gap-1.5 items-center">
                         <span className={`inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full font-mono uppercase font-semibold ${
                           client.status === 'nuevo' ? 'bg-zinc-800 text-zinc-300 border border-zinc-700' :
                           client.status === 'contactado' ? 'bg-blue-950/20 text-blue-300 border border-blue-900/30' :
@@ -309,12 +308,19 @@ export default function LeadTable({
                         }`}>
                           {client.status}
                         </span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded border border-border bg-muted/40 text-muted-foreground font-medium uppercase tracking-wider">
+                          {getTypeLabel(client.type)}
+                        </span>
+                        {client.waste_volume && (
+                          <span className={`inline-flex items-center text-[9px] px-1.5 py-0.5 rounded font-mono uppercase font-semibold ${
+                            client.waste_volume === 'alto' ? 'bg-red-950/20 text-red-300 border border-red-900/30' :
+                            client.waste_volume === 'medio' ? 'bg-yellow-950/20 text-yellow-300 border border-yellow-900/30' : 
+                            'bg-zinc-800 text-zinc-300 border border-zinc-700'
+                          }`}>
+                            {client.waste_volume}
+                          </span>
+                        )}
                       </div>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded border border-border bg-muted/40 text-muted-foreground font-medium">
-                        {getTypeLabel(client.type)}
-                      </span>
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="max-w-[200px] truncate text-xs text-muted-foreground" title={client.address}>
@@ -333,19 +339,6 @@ export default function LeadTable({
                           <span className="text-[10px] italic">No calificado</span>
                         )}
                       </div>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      {client.waste_volume ? (
-                        <span className={`inline-flex items-center text-[9px] px-1.5 py-0.5 rounded font-mono uppercase font-semibold ${
-                          client.waste_volume === 'alto' ? 'bg-red-950/20 text-red-300 border border-red-900/30' :
-                          client.waste_volume === 'medio' ? 'bg-yellow-950/20 text-yellow-300 border border-yellow-900/30' : 
-                          'bg-zinc-800 text-zinc-300 border border-zinc-700'
-                        }`}>
-                          {client.waste_volume}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground italic">Sin analizar</span>
-                      )}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <div className="inline-flex items-center gap-1.5">

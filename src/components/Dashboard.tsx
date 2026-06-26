@@ -331,11 +331,20 @@ export default function Dashboard() {
           .then((resultsArray) => {
             const allPlaces = resultsArray.flat();
             const seenIds = new Set<string>();
+            const seenNames = new Set<string>();
             const uniqueClients: Client[] = [];
 
             allPlaces.forEach((place) => {
               if (!place.place_id || seenIds.has(place.place_id)) return;
+              
+              const placeLat = place.geometry?.location?.lat() || lat;
+              const placeLng = place.geometry?.location?.lng() || lng;
+              const nameKey = `${(place.name || '').toLowerCase()}-${placeLat.toFixed(4)}-${placeLng.toFixed(4)}`;
+
+              if (seenNames.has(nameKey)) return;
+
               seenIds.add(place.place_id);
+              seenNames.add(nameKey);
 
               let detectedType = 'clinic';
               if (place.types) {
@@ -904,7 +913,7 @@ export default function Dashboard() {
 
             <div className={`grid gap-6 flex-1 min-h-0 ${isMobile ? 'grid-cols-1 overflow-y-auto' : 'grid-cols-1 lg:grid-cols-12'}`}>
               {(!isMobile || searchViewMode === 'mapa') && (
-                <div className={`${isMobile ? 'h-[400px] shrink-0' : 'lg:col-span-6 xl:col-span-7 h-full'} flex flex-col min-h-0`}>
+                <div className={`${isMobile ? 'h-[400px] shrink-0' : 'lg:col-span-6 xl:col-span-7 h-full'} flex flex-col min-h-0 min-w-0`}>
                   <MapView
                     clients={mapClients}
                     onSelectClient={handleInvestigateClient}
@@ -920,7 +929,7 @@ export default function Dashboard() {
               )}
               
               {(!isMobile || searchViewMode === 'lista') && (
-                <div className={`${isMobile ? 'shrink-0' : 'lg:col-span-6 xl:col-span-5 h-full'} flex flex-col min-h-0`}>
+                <div className={`${isMobile ? 'shrink-0' : 'lg:col-span-6 xl:col-span-5 h-full'} flex flex-col min-h-0 min-w-0`}>
                   <LeadTable
                     clients={searchResults}
                     onSelectClient={handleSelectClient}
