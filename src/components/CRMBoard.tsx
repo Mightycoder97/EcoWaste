@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import styles from '../styles/modules/CRMBoard.module.css';
 import { Client } from '@/models/db';
+import { Eye, ArrowRight, X, MapPin } from 'lucide-react';
 
 interface CRMBoardProps {
   clients: Client[];
@@ -21,12 +21,12 @@ export default function CRMBoard({
   const [dragOverColumn, setDragOverColumn] = useState<ColumnType | null>(null);
 
   // 1. Columnas y sus etiquetas en el CRM
-  const columns: { type: ColumnType; title: string; color: string }[] = [
-    { type: 'nuevo', title: 'Nuevo Prospecto', color: 'var(--color-text-muted)' },
-    { type: 'contactado', title: 'Contactado', color: 'var(--color-info)' },
-    { type: 'negociacion', title: 'En Negociación', color: 'var(--color-warning)' },
-    { type: 'ganado', title: 'Contrato Ganado', color: 'var(--color-primary)' },
-    { type: 'descartado', title: 'Descartado', color: 'var(--color-danger)' },
+  const columns: { type: ColumnType; title: string; colorClass: string }[] = [
+    { type: 'nuevo', title: 'Nuevo', colorClass: 'text-muted-foreground' },
+    { type: 'contactado', title: 'Contactado', colorClass: 'text-blue-400' },
+    { type: 'negociacion', title: 'En Negociación', colorClass: 'text-yellow-400' },
+    { type: 'ganado', title: 'Ganado', colorClass: 'text-green-400' },
+    { type: 'descartado', title: 'Descartado', colorClass: 'text-red-400' },
   ];
 
   // 2. Agrupar clientes por su estado
@@ -93,7 +93,7 @@ export default function CRMBoard({
   };
 
   return (
-    <div className={styles.boardContainer}>
+    <div className="flex-1 flex flex-row gap-4 overflow-x-auto min-h-0 select-none pb-4 scrollbar-thin">
       {columns.map((col) => {
         const colClients = clientsByColumn[col.type] || [];
         const isOver = dragOverColumn === col.type;
@@ -101,87 +101,96 @@ export default function CRMBoard({
         return (
           <div
             key={col.type}
-            className={`${styles.column} ${isOver ? styles.cardDragOver : ''}`}
+            className={`flex flex-col w-72 shrink-0 bg-card/30 border border-border rounded-xl p-3 gap-3 transition-colors duration-150 ${
+              isOver ? 'border-foreground/20 bg-muted/10' : ''
+            }`}
             onDragOver={(e) => handleDragOver(e, col.type)}
             onDrop={() => handleDrop(col.type)}
             onDragLeave={() => setDragOverColumn(null)}
           >
-            {/* Header de columna */}
-            <div className={styles.columnHeader}>
-              <div className={styles.columnTitle} style={{ color: col.color }}>
-                <span>●</span> {col.title}
+            {/* Header de la columna */}
+            <div className="flex items-center justify-between py-1 border-b border-border/40 pb-2">
+              <div className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  col.type === 'nuevo' ? 'bg-zinc-400' :
+                  col.type === 'contactado' ? 'bg-blue-400' :
+                  col.type === 'negociacion' ? 'bg-yellow-400' :
+                  col.type === 'ganado' ? 'bg-green-400' : 'bg-red-400'
+                }`} />
+                <span className="text-foreground">{col.title}</span>
               </div>
-              <span className={styles.countBadge}>{colClients.length}</span>
+              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
+                {colClients.length}
+              </span>
             </div>
 
             {/* Listado de Tarjetas */}
-            <div className={styles.cardsContainer}>
+            <div className="flex flex-col gap-2.5 overflow-y-auto flex-1 scrollbar-none">
               {colClients.map((client) => {
                 const nextStatus = getNextStatus(client.status);
                 
                 return (
                   <div
                     key={client.id}
-                    className={styles.card}
+                    className="bg-card border border-border/70 rounded-lg p-3.5 flex flex-col gap-2 hover:border-foreground/30 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all"
                     draggable
                     onDragStart={() => handleDragStart(client.id)}
                     onDragEnd={handleDragEnd}
                   >
-                    <div className={styles.cardTitle}>{client.name}</div>
+                    <div className="text-xs font-semibold text-foreground leading-normal">{client.name}</div>
                     
-                    <div className={styles.cardMeta}>
-                      <span className={`type-badge type-${client.type}`} style={{ fontSize: '0.65rem' }}>
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-[9px] px-1.5 py-0.5 rounded border border-border bg-muted/40 text-muted-foreground font-medium">
                         {getTypeLabel(client.type)}
                       </span>
                       {client.waste_volume && (
-                        <span style={{ 
-                          fontSize: '0.65rem', 
-                          fontWeight: '600',
-                          color: client.waste_volume === 'alto' ? 'var(--color-danger)' : 
-                                 client.waste_volume === 'medio' ? 'var(--color-warning)' : 'var(--color-primary)'
-                        }}>
-                          ☣️ {client.waste_volume.toUpperCase()}
+                        <span className={`text-[9px] font-semibold font-mono uppercase ${
+                          client.waste_volume === 'alto' ? 'text-red-400' : 
+                          client.waste_volume === 'medio' ? 'text-yellow-400' : 'text-zinc-400'
+                        }`}>
+                          {client.waste_volume}
                         </span>
                       )}
                     </div>
 
-                    <div className={styles.cardAddress} title={client.address}>
-                      📍 {client.address || 'Sin dirección'}
+                    <div className="text-[10px] text-muted-foreground truncate flex items-center gap-1" title={client.address}>
+                      <MapPin className="w-3 h-3 text-muted-foreground/60 shrink-0" />
+                      <span className="truncate">{client.address || 'Sin dirección'}</span>
                     </div>
 
                     {(client.phone || client.email) && (
-                      <div className={styles.cardDetails}>
+                      <div className="flex flex-col gap-0.5 text-[9px] text-muted-foreground bg-muted/20 p-2 rounded border border-border/40">
                         {client.phone && <span>📞 {client.phone}</span>}
-                        {client.email && <span>✉️ {client.email}</span>}
+                        {client.email && <span className="truncate">✉️ {client.email}</span>}
                       </div>
                     )}
 
-                    <div className={styles.quickActions}>
+                    <div className="flex gap-1.5 mt-1 border-t border-border/40 pt-2">
                       <button
                         onClick={() => onSelectClient(client)}
-                        className={styles.btnQuick}
+                        className="h-7 flex-1 border border-border rounded text-[10px] font-medium flex items-center justify-center gap-1 cursor-pointer hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        👁️ Ficha
+                        <Eye className="w-3 h-3" />
+                        <span>Ficha</span>
                       </button>
 
                       {nextStatus && (
                         <button
                           onClick={() => onUpdateClientStatus(client.id, nextStatus)}
-                          className={styles.btnQuick}
+                          className="h-7 w-7 border border-border rounded flex items-center justify-center cursor-pointer hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                           title={`Mover a ${nextStatus}`}
                         >
-                          ➡️
+                          <ArrowRight className="w-3 h-3" />
                         </button>
                       )}
                       
                       {client.status !== 'descartado' && (
                         <button
                           onClick={() => onUpdateClientStatus(client.id, 'descartado')}
-                          className={styles.btnQuick}
-                          style={{ color: 'var(--color-danger)' }}
+                          className="h-7 w-7 border border-border rounded flex items-center justify-center cursor-pointer hover:bg-muted text-red-400/80 hover:text-red-400 transition-colors"
                           title="Descartar prospecto"
                         >
-                          ✕
+                          <X className="w-3 h-3" />
                         </button>
                       )}
                     </div>
@@ -190,14 +199,7 @@ export default function CRMBoard({
               })}
 
               {colClients.length === 0 && (
-                <div style={{
-                  padding: '24px 12px',
-                  textAlign: 'center',
-                  color: 'var(--color-text-muted)',
-                  fontSize: '0.75rem',
-                  border: '1px dashed #334155',
-                  borderRadius: '8px'
-                }}>
+                <div className="py-10 text-center text-muted-foreground text-[10px] border border-dashed border-border rounded-lg bg-muted/5">
                   Arrastra prospectos aquí
                 </div>
               )}

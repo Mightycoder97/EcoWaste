@@ -1,8 +1,21 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import styles from '../styles/modules/ResearchPanel.module.css';
 import { Client } from '@/models/db';
+import { 
+  X, 
+  Sparkles, 
+  Phone, 
+  Mail, 
+  Globe, 
+  CheckCircle2, 
+  AlertCircle, 
+  HelpCircle, 
+  Terminal, 
+  FileText, 
+  Link, 
+  Save 
+} from 'lucide-react';
 
 interface ResearchPanelProps {
   client: Client;
@@ -51,23 +64,23 @@ export default function ResearchPanel({
     const dsKey = localStorage.getItem('DS_API_KEY') || 'sk-f9a0f8949ddd4e15a9445a1813f70942';
     const spKey = localStorage.getItem('SERPER_API_KEY') || '';
 
-    addLog('🔍 Iniciando módulo de recolección de datos...');
-    await new Promise((r) => setTimeout(r, 800));
+    addLog('Iniciando módulo de recolección de datos...');
+    await new Promise((r) => setTimeout(r, 600));
     
     if (geminiKey) {
-      addLog(`🌐 Preparando términos de búsqueda para "${client.name}"...`);
-      await new Promise((r) => setTimeout(r, 800));
-      addLog('🕸️ Consultando Google Search mediante Grounding nativo...');
-      await new Promise((r) => setTimeout(r, 800));
-      addLog('🤖 Conectando con servidor LLM Google Gemini (gemini-2.5-flash)...');
+      addLog(`Preparando términos de búsqueda para "${client.name}"...`);
+      await new Promise((r) => setTimeout(r, 600));
+      addLog('Consultando Web mediante Search Grounding...');
+      await new Promise((r) => setTimeout(r, 600));
+      addLog('Conectando con modelo de inteligencia...');
     } else {
-      addLog(`🌐 Preparando términos de búsqueda para "${client.name}"...`);
-      await new Promise((r) => setTimeout(r, 800));
-      addLog('🕸️ Consultando bases de datos web e indexadores (Serper Search)...');
-      await new Promise((r) => setTimeout(r, 800));
-      addLog('📄 Analizando metadatos y extrayendo fragmentos de texto relevantes...');
-      await new Promise((r) => setTimeout(r, 800));
-      addLog('🤖 Conectando con servidor LLM DeepSeek V4 (deepseek-chat)...');
+      addLog(`Preparando términos de búsqueda para "${client.name}"...`);
+      await new Promise((r) => setTimeout(r, 600));
+      addLog('Consultando bases de datos indexadas...');
+      await new Promise((r) => setTimeout(r, 600));
+      addLog('Extrayendo fragmentos de texto relevantes...');
+      await new Promise((r) => setTimeout(r, 600));
+      addLog('Conectando con servidor de procesamiento...');
     }
     
     try {
@@ -88,30 +101,25 @@ export default function ResearchPanel({
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error || 'Error al ejecutar investigación en servidor.');
+        throw new Error(errData.error || 'Error al ejecutar análisis en el servidor.');
       }
 
       const data = await response.json();
       
-      if (geminiKey) {
-        addLog('✨ Google Gemini completó la extracción y síntesis de datos.');
-      } else {
-        addLog('✨ DeepSeek V4 completó la extracción y síntesis de datos.');
-      }
-      await new Promise((r) => setTimeout(r, 500));
-      
-      addLog('💾 Guardando datos enriquecidos en base de datos...');
+      addLog('Extracción y síntesis de datos completada.');
+      await new Promise((r) => setTimeout(r, 400));
+      addLog('Guardando datos actualizados...');
       
       // Actualizar el cliente en el frontend
       onUpdateClient(data.client);
       setNotes(getUserNotes(data.client.notes || ''));
 
-      await new Promise((r) => setTimeout(r, 500));
-      addLog('✅ Investigación completada de forma exitosa.');
+      await new Promise((r) => setTimeout(r, 400));
+      addLog('Calificación completada con éxito.');
       
     } catch (error) {
       const err = error as Error;
-      addLog(`❌ ERROR: ${err.message}`);
+      addLog(`ERROR: ${err.message}`);
     } finally {
       setIsAnalyzing(false);
     }
@@ -202,28 +210,31 @@ export default function ResearchPanel({
     if (status === 'verificado') {
       return (
         <span 
-          className={styles.badgeVerified} 
-          data-tooltip={explanation || 'Información verificada por el agente auditor.'}
+          className="inline-flex items-center gap-1 text-[9px] font-semibold text-green-400 bg-green-950/20 border border-green-900/30 px-1.5 py-0.5 rounded-full cursor-help"
+          title={explanation || 'Información verificada con fuentes web.'}
         >
-          ✓ Verificado
+          <CheckCircle2 className="w-2.5 h-2.5" />
+          <span>Verificado</span>
         </span>
       );
     } else if (status === 'alucinacion') {
       return (
         <span 
-          className={styles.badgeHallucination} 
-          data-tooltip={explanation || 'Alucinación o inconsistencia detectada en la auditoría.'}
+          className="inline-flex items-center gap-1 text-[9px] font-semibold text-red-400 bg-red-950/20 border border-red-900/30 px-1.5 py-0.5 rounded-full cursor-help"
+          title={explanation || 'Inconsistencia detectada en las fuentes.'}
         >
-          ⚠️ Alucinación
+          <AlertCircle className="w-2.5 h-2.5" />
+          <span>Inconsistencia</span>
         </span>
       );
     } else if (status === 'no_disponible') {
       return (
         <span 
-          className={styles.badgeUnverified} 
-          data-tooltip={explanation || 'No se encontró información en las fuentes.'}
+          className="inline-flex items-center gap-1 text-[9px] font-semibold text-zinc-400 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded-full cursor-help"
+          title={explanation || 'No se localizó información pública.'}
         >
-          ∅ No Disp.
+          <HelpCircle className="w-2.5 h-2.5" />
+          <span>Sin registro</span>
         </span>
       );
     }
@@ -231,95 +242,100 @@ export default function ResearchPanel({
   };
 
   return (
-    <div className={styles.drawerBackdrop} onClick={onClose}>
-      <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex justify-end animate-in fade-in duration-200" onClick={onClose}>
+      <div 
+        className="w-full max-w-lg bg-card border-l border-border h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 select-none"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Cabecera */}
-        <div className={styles.drawerHeader}>
-          <div>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '4px' }}>{client.name}</h3>
-            <span className={`status-badge status-${client.status}`}>{client.status}</span>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex flex-col gap-1 min-w-0">
+            <h3 className="text-base font-semibold text-foreground truncate max-w-[360px]">{client.name}</h3>
+            <div>
+              <span className={`inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full font-mono uppercase font-semibold ${
+                client.status === 'nuevo' ? 'bg-zinc-800 text-zinc-300 border border-zinc-700' :
+                client.status === 'contactado' ? 'bg-blue-950/20 text-blue-300 border border-blue-900/30' :
+                client.status === 'negociacion' ? 'bg-yellow-950/20 text-yellow-300 border border-yellow-900/30' :
+                client.status === 'ganado' ? 'bg-green-950/20 text-green-300 border border-green-900/30' :
+                'bg-red-950/20 text-red-300 border border-red-900/30'
+              }`}>
+                {client.status}
+              </span>
+            </div>
           </div>
-          <button className={styles.btnClose} onClick={onClose}>✕</button>
+          <button 
+            className="h-8 w-8 hover:bg-muted text-muted-foreground hover:text-foreground rounded-md flex items-center justify-center cursor-pointer transition-colors"
+            onClick={onClose}
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Contenido */}
-        <div className={styles.drawerContent}>
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 scrollbar-thin">
           
           {/* Información General */}
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Datos del Establecimiento</div>
-            <div className={styles.grid}>
-              <div className={styles.infoBlock}>
-                <div className={styles.label}>Tipo</div>
-                <div className={styles.value}>{getTypeLabel(client.type)}</div>
+          <div className="flex flex-col gap-3">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/40 pb-1.5 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5" />
+              <span>Ficha del Establecimiento</span>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div className="flex flex-col gap-1">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Tipo</div>
+                <div className="text-xs font-semibold text-foreground">{getTypeLabel(client.type)}</div>
               </div>
-              <div className={styles.infoBlock}>
-                <div className={styles.label}>Ubicación</div>
-                <div className={styles.value}>{client.address || 'Sin dirección registrada'}</div>
+              <div className="flex flex-col gap-1">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Ubicación</div>
+                <div className="text-xs font-semibold text-foreground leading-normal">{client.address || 'Sin dirección registrada'}</div>
               </div>
-              <div className={styles.infoBlock}>
-                <div className={styles.label}>
+              <div className="flex flex-col gap-1">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <span>Teléfono</span>
                   {renderVerificationBadge('phone')}
                   {sources.phone && (
-                    <a
-                      href={sources.phone}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={styles.sourceLink}
-                      title={`Fuente: ${sources.phone}`}
-                    >
-                      🔗 Fuente
+                    <a href={sources.phone} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground" title="Ver origen del dato">
+                      <Link className="w-2.5 h-2.5" />
                     </a>
                   )}
                 </div>
-                <div className={styles.value}>{client.phone || 'No registrado'}</div>
+                <div className="text-xs font-semibold text-foreground">{client.phone || 'No registrado'}</div>
               </div>
-              <div className={styles.infoBlock}>
-                <div className={styles.label}>
+              <div className="flex flex-col gap-1">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <span>Correo Electrónico</span>
                   {renderVerificationBadge('email')}
                   {sources.email && (
-                    <a
-                      href={sources.email}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={styles.sourceLink}
-                      title={`Fuente: ${sources.email}`}
-                    >
-                      🔗 Fuente
+                    <a href={sources.email} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground" title="Ver origen del dato">
+                      <Link className="w-2.5 h-2.5" />
                     </a>
                   )}
                 </div>
-                <div className={styles.value}>
+                <div className="text-xs font-semibold text-foreground truncate">
                   {client.email ? (
-                    <a href={`mailto:${client.email}`} style={{ color: 'var(--color-primary-hover)' }}>
+                    <a href={`mailto:${client.email}`} className="underline hover:text-muted-foreground">
                       {client.email}
                     </a>
                   ) : 'No registrado'}
                 </div>
               </div>
               {client.website && (
-                <div className={styles.infoBlock} style={{ gridColumn: 'span 2' }}>
-                  <div className={styles.label}>
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <span>Sitio Web</span>
                     {renderVerificationBadge('website')}
                     {sources.website && (
-                      <a
-                        href={sources.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.sourceLink}
-                        title={`Fuente: ${sources.website}`}
-                      >
-                        🔗 Fuente
+                      <a href={sources.website} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground" title="Ver origen del dato">
+                        <Link className="w-2.5 h-2.5" />
                       </a>
                     )}
                   </div>
-                  <div className={styles.value}>
-                    <a href={client.website} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary-hover)' }}>
-                      {client.website}
+                  <div className="text-xs font-semibold text-foreground truncate">
+                    <a href={client.website} target="_blank" rel="noreferrer" className="underline hover:text-muted-foreground flex items-center gap-1">
+                      <Globe className="w-3 h-3 text-muted-foreground" />
+                      <span>{client.website}</span>
                     </a>
                   </div>
                 </div>
@@ -327,168 +343,157 @@ export default function ResearchPanel({
             </div>
           </div>
 
-          {/* Síntesis de IA */}
+          {/* Resumen de Datos Enriquecidos */}
           {synthesisText && (
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>Análisis de la Inteligencia Artificial</div>
-              <div className={styles.synthesisBox}>
-                💡 <b>Síntesis DeepSeek V4:</b> {synthesisText}
+            <div className="flex flex-col gap-3">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/40 pb-1.5">
+                Resumen de Información
+              </div>
+              <div className="bg-muted/20 border border-border/80 rounded-lg p-4 text-xs leading-relaxed text-muted-foreground">
+                {synthesisText}
               </div>
             </div>
           )}
 
-          {/* Información de Residuos Peligrosos */}
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Residuos Peligrosos</div>
-            <div className={styles.grid}>
-              <div className={styles.infoBlock}>
-                <div className={styles.label}>Volumen Estimado</div>
-                <div className={styles.value} style={{
-                  color: client.waste_volume === 'alto' ? 'var(--color-danger)' : 
-                         client.waste_volume === 'medio' ? 'var(--color-warning)' : 
-                         client.waste_volume === 'bajo' ? 'var(--color-primary)' : '#ffffff'
-                }}>
-                  {client.waste_volume ? `☣️ ${client.waste_volume.toUpperCase()}` : 'No analizado'}
+          {/* Información de Residuos */}
+          <div className="flex flex-col gap-3">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/40 pb-1.5">
+              Calificación de Residuos Peligrosos
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+              <div className="flex flex-col gap-1">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Volumen Estimado</div>
+                <div className="mt-0.5">
+                  {client.waste_volume ? (
+                    <span className={`inline-flex items-center text-[9px] px-1.5 py-0.5 rounded font-mono uppercase font-semibold ${
+                      client.waste_volume === 'alto' ? 'bg-red-950/20 text-red-300 border border-red-900/30' :
+                      client.waste_volume === 'medio' ? 'bg-yellow-950/20 text-yellow-300 border border-yellow-900/30' : 
+                      'bg-zinc-800 text-zinc-300 border border-zinc-700'
+                    }`}>
+                      {client.waste_volume}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">Sin calificar</span>
+                  )}
                 </div>
               </div>
-              <div className={styles.infoBlock} style={{ gridColumn: 'span 2' }}>
-                <div className={styles.label}>
-                  <span>Detalle de Residuos Generados</span>
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <span>Detalle de Desechos</span>
                   {renderVerificationBadge('waste_details')}
                   {sources.waste_details && (
-                    <a
-                      href={sources.waste_details}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={styles.sourceLink}
-                      title={`Fuente: ${sources.waste_details}`}
-                    >
-                      🔗 Fuente
+                    <a href={sources.waste_details} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground" title="Ver origen del dato">
+                      <Link className="w-2.5 h-2.5" />
                     </a>
                   )}
                 </div>
-                <div className={styles.value} style={{ fontWeight: 'normal', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
-                  {client.waste_details || 'Ejecuta el análisis de DeepSeek V4 para calificar sus desechos clínicos.'}
+                <div className="text-xs text-muted-foreground leading-normal">
+                  {client.waste_details || 'Ejecuta el análisis automático para obtener información sobre los desechos médicos generados.'}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Contactos Clave */}
-          <div className={styles.section}>
-            <div className={styles.sectionTitleWithSource}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>Contactos Clave (Encontrados por IA)</span>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between border-b border-border/40 pb-1.5">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <span>Personal Clave Identificado</span>
                 {renderVerificationBadge('key_contacts')}
               </div>
               {sources.key_contacts && (
-                <a
-                  href={sources.key_contacts}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={styles.sourceLinkHeader}
-                  title={`Fuente: ${sources.key_contacts}`}
-                >
-                  🔗 Ver Fuente
+                <a href={sources.key_contacts} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1" title="Ver origen del dato">
+                  <Link className="w-3 h-3" />
+                  <span>Ver origen</span>
                 </a>
               )}
             </div>
+            
             {client.key_contacts && client.key_contacts.length > 0 ? (
-              <>
-                <table className={`${styles.table} ${styles.desktopTable}`}>
+              <div className="border border-border rounded-lg overflow-hidden bg-card/40">
+                <table className="w-full text-xs text-left border-collapse">
                   <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th>Cargo</th>
-                      <th>Contacto</th>
+                    <tr className="bg-muted/30 border-b border-border/60 text-[9px] uppercase font-semibold text-muted-foreground">
+                      <th className="px-3 py-2">Nombre</th>
+                      <th className="px-3 py-2">Cargo</th>
+                      <th className="px-3 py-2">Datos</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-border/40">
                     {client.key_contacts.map((contact, idx) => (
-                      <tr key={idx}>
-                        <td style={{ fontWeight: '600' }}>{contact.name}</td>
-                        <td>{contact.role}</td>
-                        <td>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.75rem' }}>
+                      <tr key={idx} className="hover:bg-muted/10">
+                        <td className="px-3 py-2 font-semibold text-foreground">{contact.name}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{contact.role}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          <div className="flex flex-col gap-0.5 text-[10px]">
                             {contact.phone && <span>📞 {contact.phone}</span>}
-                            {contact.email && <span>✉️ {contact.email}</span>}
+                            {contact.email && <span className="underline truncate max-w-[120px]">{contact.email}</span>}
                           </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-
-                <div className={styles.mobileContactsList}>
-                  {client.key_contacts.map((contact, idx) => (
-                    <div key={idx} className={styles.contactCard}>
-                      <div className={styles.contactHeader}>
-                        <span className={styles.contactName}>{contact.name}</span>
-                        {contact.role && <span className={styles.contactRole}>{contact.role}</span>}
-                      </div>
-                      <div className={styles.contactBody}>
-                        {contact.phone && <div className={styles.contactDetailItem}>📞 {contact.phone}</div>}
-                        {contact.email && <div className={styles.contactDetailItem}>✉️ {contact.email}</div>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
+              </div>
             ) : (
-              <p style={{ fontStyle: 'italic', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                No se han registrado personas de contacto específicas para esta sucursal.
+              <p className="text-xs italic text-muted-foreground">
+                No se han registrado personas de contacto específicas para este establecimiento.
               </p>
             )}
           </div>
 
-          {/* Consola de Investigación */}
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Investigación Automatizada</div>
+          {/* Consola de Análisis */}
+          <div className="flex flex-col gap-3">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/40 pb-1.5 flex items-center gap-1.5">
+              <Terminal className="w-3.5 h-3.5" />
+              <span>Consola de Calificación</span>
+            </div>
             
             {logs.length > 0 && (
-              <div className={styles.terminal}>
+              <div className="bg-background border border-border rounded-lg p-4 font-mono text-[10px] text-muted-foreground flex flex-col gap-1.5 h-40 overflow-y-auto">
                 {logs.map((log, idx) => (
-                  <div key={idx} className={styles.terminalLine}>
-                    <span className={styles.terminalTime}>[{log.time}]</span>
+                  <div key={idx} className="leading-normal flex gap-2">
+                    <span className="text-zinc-600 shrink-0">[{log.time}]</span>
                     <span>{log.text}</span>
                   </div>
                 ))}
                 {isAnalyzing && (
-                  <div className={styles.terminalLine}>
-                    <span className={styles.terminalTime}>[{new Date().toLocaleTimeString()}]</span>
-                    <span>Procesando...<span className={styles.terminalCursor}>_</span></span>
+                  <div className="text-foreground animate-pulse">
+                    Procesando...
                   </div>
                 )}
                 <div ref={terminalEndRef} />
               </div>
             )}
 
-            <div className={styles.btnActionRow}>
-              <button
-                className={styles.btnResearch}
-                onClick={handleRunDeepResearch}
-                disabled={isAnalyzing}
-              >
-                {isAnalyzing ? '🤖 Analizando con DeepSeek...' : '⚡ Ejecutar Deep Research con DeepSeek V4'}
-              </button>
-            </div>
+            <button
+              className="h-9 bg-foreground text-background hover:bg-foreground/90 text-xs font-semibold rounded-md flex items-center justify-center gap-2 cursor-pointer transition-colors shadow disabled:opacity-50"
+              onClick={handleRunDeepResearch}
+              disabled={isAnalyzing}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isAnalyzing ? 'Analizando...' : 'Calificar e Investigar Establecimiento'}</span>
+            </button>
           </div>
 
           {/* Notas del CRM */}
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Notas de Seguimiento CRM</div>
+          <div className="flex flex-col gap-3 border-t border-border/40 pt-5">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Notas de Seguimiento CRM
+            </div>
             <textarea
-              className={styles.notesArea}
-              placeholder="Escribe notas sobre llamadas, reuniones o acuerdos de cotización con este cliente..."
+              className="w-full h-28 bg-transparent border border-input rounded-md p-3 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring resize-none text-foreground placeholder:text-muted-foreground"
+              placeholder="Registrar notas sobre llamadas, reuniones o acuerdos de cotización..."
               value={notes}
               onChange={handleNotesChange}
             />
             <button
-              className={styles.btnResearch}
-              style={{ background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', border: '1px solid var(--border-color)', boxShadow: 'none' }}
+              className="h-9 border border-border hover:bg-muted text-xs font-semibold rounded-md flex items-center justify-center gap-2 cursor-pointer transition-colors text-muted-foreground hover:text-foreground w-full"
               onClick={handleSaveNotesClick}
             >
-              💾 Guardar Notas
+              <Save className="w-3.5 h-3.5" />
+              <span>Guardar Notas</span>
             </button>
           </div>
 

@@ -1,29 +1,42 @@
-/* EcoWaste Finder - Premium Dark Design System */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  --color-background: #09090b; /* zinc-950 */
+  --color-foreground: #fafafa; /* zinc-50 */
+  
+  --color-card: #18181b; /* zinc-900 */
+  --color-card-foreground: #fafafa;
+  
+  --color-popover: #09090b;
+  --color-popover-foreground: #fafafa;
+  
+  --color-primary: #fafafa; /* zinc-50 */
+  --color-primary-foreground: #18181b; /* zinc-900 */
+  
+  --color-secondary: #27272a; /* zinc-800 */
+  --color-secondary-foreground: #fafafa;
+  
+  --color-muted: #27272a;
+  --color-muted-foreground: #a1a1aa; /* zinc-400 */
+  
+  --color-accent: #27272a;
+  --color-accent-foreground: #fafafa;
+  
+  --color-border: #27272a;
+  --color-input: #27272a;
+  --color-ring: #d4d4d8; /* zinc-300 */
+  
+  --color-alert-info: #3b82f6;
+  --color-alert-warning: #eab308;
+  --color-alert-error: #ef4444;
+  --color-alert-success: #10b981;
+}
 
 :root {
-  /* HSL Palette */
-  --bg-main: #090d16;
-  --bg-sidebar: #0f172a;
-  --bg-card: #1e293b;
-  --bg-card-hover: #334155;
-  --border-color: #1e293b;
-  --border-glow: #10b98133;
-  
-  --color-text-main: #f8fafc;
-  --color-text-muted: #94a3b8;
-  
-  /* Brand colors */
-  --color-primary: #10b981; /* Emerald green (Ecological/Safe) */
-  --color-primary-hover: #34d399;
-  --color-primary-rgb: 16, 185, 129;
-  
-  --color-warning: #f59e0b; /* Amber (Warning/Medium waste) */
-  --color-danger: #ef4444; /* Red (Hazardous/High waste) */
-  --color-info: #3b82f6; /* Blue (Clinic/Dentist) */
-  
-  /* System states */
-  --accent-color: var(--color-primary);
+  color-scheme: dark;
 }
 
 * {
@@ -33,179 +46,96 @@
 }
 
 body {
-  background-color: var(--bg-main);
-  color: var(--color-text-main);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  overflow-x: hidden;
-  accent-color: var(--color-primary);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 600;
-  color: #ffffff;
+  overflow-x: hidden;
 }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-main);
+  background: var(--color-background);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
+  background: var(--color-border);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--bg-card-hover);
+  background: #3f3f46; /* zinc-700 */
 }
 
-/* Leaflet Dark Theme Filter */
+/* Leaflet Dark Theme Integration */
 .leaflet-container {
-  background: var(--bg-main) !important;
+  background: #09090b !important;
   font-family: inherit !important;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
 }
 .leaflet-tile {
-  /* Invert tiles to create dark map, adjust hue to match slate theme */
-  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(1.1) saturate(0.8) !important;
+  filter: invert(1) hue-rotate(180deg) brightness(0.7) contrast(1.2) saturate(0.2) !important;
 }
 .leaflet-bar {
-  border: 1px solid var(--border-color) !important;
+  border: 1px solid var(--color-border) !important;
   box-shadow: none !important;
+  border-radius: 6px !important;
+  overflow: hidden;
 }
 .leaflet-bar a {
-  background-color: var(--bg-card) !important;
-  color: var(--color-text-main) !important;
-  border-bottom: 1px solid var(--border-color) !important;
-  transition: all 0.2s ease;
+  background-color: var(--color-card) !important;
+  color: var(--color-foreground) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 .leaflet-bar a:hover {
-  background-color: var(--bg-card-hover) !important;
-  color: var(--color-primary) !important;
+  background-color: #27272a !important;
+  color: #ffffff !important;
 }
 .leaflet-popup-content-wrapper {
-  background: var(--bg-card) !important;
-  color: var(--color-text-main) !important;
-  border: 1px solid var(--border-color);
-  border-radius: 12px !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  background: var(--color-card) !important;
+  color: var(--color-foreground) !important;
+  border: 1px solid var(--color-border);
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  padding: 2px !important;
+}
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  line-height: 1.4 !important;
 }
 .leaflet-popup-tip {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border-color);
+  background: var(--color-card) !important;
+  border: 1px solid var(--color-border);
+}
+.leaflet-popup-close-button {
+  color: var(--color-muted-foreground) !important;
+  padding: 8px !important;
+}
+.leaflet-popup-close-button:hover {
+  color: var(--color-foreground) !important;
+  background: transparent !important;
 }
 
-/* Animations */
-@keyframes radar-pulse {
+/* Keyframe for simple pulse on Origin Marker */
+@keyframes origin-pulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 15px rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
   }
 }
 
-@keyframes ia-glow {
-  0% {
-    border-color: var(--border-color);
-    box-shadow: 0 0 5px rgba(16, 185, 129, 0);
-  }
-  50% {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
-  }
-  100% {
-    border-color: var(--border-color);
-    box-shadow: 0 0 5px rgba(16, 185, 129, 0);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* Utility Animations */
-.animate-radar {
-  animation: radar-pulse 2s infinite;
-}
-
-.animate-ia-glow {
-  animation: ia-glow 2s infinite;
-}
-
-.skeleton {
-  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 4px;
-}
-
-/* Glassmorphism utility */
-.glass {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* CRM status colors */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-.status-nuevo { background: rgba(148, 163, 184, 0.15); color: var(--color-text-muted); border: 1px solid rgba(148, 163, 184, 0.3); }
-.status-contactado { background: rgba(59, 130, 246, 0.15); color: var(--color-info); border: 1px solid rgba(59, 130, 246, 0.3); }
-.status-negociacion { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); border: 1px solid rgba(245, 158, 11, 0.3); }
-.status-ganado { background: rgba(16, 185, 129, 0.15); color: var(--color-primary); border: 1px solid rgba(16, 185, 129, 0.3); }
-.status-descartado { background: rgba(239, 68, 68, 0.15); color: var(--color-danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-
-/* Types labels */
-.type-badge {
-  display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 500;
-}
-.type-hospital { background: rgba(239, 68, 68, 0.15); color: var(--color-danger); }
-.type-clinic { background: rgba(59, 130, 246, 0.15); color: var(--color-info); }
-.type-laboratory { background: rgba(16, 185, 129, 0.15); color: var(--color-primary); }
-.type-dentist { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); }
-.type-veterinary { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
-
-/* Grid main layout */
-.app-container {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-}
-
-@media (max-width: 1024px) {
-  .app-container {
-    grid-template-columns: 80px 1fr;
-  }
+.origin-marker-pulse {
+  animation: origin-pulse 2s infinite;
 }

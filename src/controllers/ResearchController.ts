@@ -179,10 +179,10 @@ export class ResearchController {
       console.log(`[ResearchController] Iniciando investigación con Agente Único Gemini para ${client.name}...`);
       
       const geminiSystemPrompt = `Eres un asistente experto en investigación de mercado, fiscalización ambiental y gestión de residuos peligrosos.
-Tu objetivo es investigar en internet un establecimiento médico para extraer información de contacto precisa y calificar su generación de residuos peligrosos.
-Debes responder ÚNICAMENTE con un objeto JSON válido que contenga la estructura definida. No agregues texto explicativo antes ni después del JSON.
+Tu objetivo es realizar una búsqueda profunda en internet sobre el establecimiento médico indicado para encontrar información de contacto verídica (teléfono, correo electrónico, sitio web) y calificar su generación de residuos.
+Debes priorizar la búsqueda de al menos un teléfono y un correo electrónico real. Para ello, realiza búsquedas minuciosas que incluyan directorios nacionales (como "Paginas Amarillas", directorios médicos), redes sociales (Facebook, Instagram, LinkedIn) y páginas de contacto oficiales.
 
-Estructura JSON requerida:
+Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructura:
 {
   "phone": "Teléfono de contacto principal (debe ser un string)",
   "email": "Correo electrónico de contacto (debe ser un string)",
@@ -213,7 +213,7 @@ Estructura JSON requerida:
 }
 
 REGLAS CRÍTICAS DE PRECISIÓN:
-1. Utiliza la herramienta de búsqueda de Google para buscar información real sobre el cliente en internet.
+1. Utiliza la herramienta de búsqueda de Google para buscar información real sobre el cliente en internet. Refina la búsqueda si es necesario (ej. buscando en 'Paginas Amarillas', 'Facebook', 'contacto', 'director').
 2. Extrae únicamente datos reales encontrados en la web. NO inventes ni supongas teléfonos, correos ni nombres que no figuren explícitamente en los resultados de búsqueda. Si no hay información sobre un campo, déjalo vacío ("").
 3. Para cada campo en "sources", debes proveer la URL exacta de la cual extrajiste esa información.`;
 
@@ -236,29 +236,73 @@ Por favor, realiza las búsquedas necesarias en Google Search, extrae toda la in
           throw new Error(`Gemini no devolvió un JSON válido: ${e.message}`);
         }
 
-        // Construir verificación basada en grounding
-        const verificationData = {
-          phone: { 
-            status: parsedData.phone ? 'verificado' : 'no_disponible', 
-            explanation: parsedData.phone ? `Verificado en la fuente: ${parsedData.sources?.phone || 'Búsqueda de Google'}` : 'Teléfono no encontrado en la búsqueda'
-          },
-          email: { 
-            status: parsedData.email ? 'verificado' : 'no_disponible', 
-            explanation: parsedData.email ? `Verificado en la fuente: ${parsedData.sources?.email || 'Búsqueda de Google'}` : 'Correo no encontrado en la búsqueda'
-          },
-          website: { 
-            status: parsedData.website ? 'verificado' : 'no_disponible', 
-            explanation: parsedData.website ? `Verificado en la fuente: ${parsedData.sources?.website || 'Búsqueda de Google'}` : 'Sitio web no encontrado en la búsqueda'
-          },
-          waste_details: { 
-            status: parsedData.waste_details ? 'verificado' : 'no_disponible', 
-            explanation: parsedData.waste_details ? `Verificado en la fuente: ${parsedData.sources?.waste_details || 'Búsqueda de Google'}` : 'Detalles de residuos no encontrados en la búsqueda'
-          },
-          key_contacts: { 
-            status: parsedData.key_contacts && parsedData.key_contacts.length > 0 ? 'verificado' : 'no_disponible', 
-            explanation: parsedData.key_contacts && parsedData.key_contacts.length > 0 ? `Verificado en la fuente: ${parsedData.sources?.key_contacts || 'Búsqueda de Google'}` : 'Contactos clave no encontrados en la búsqueda'
-          }
+        // 2. Ejecutar Auditoría de Alucinaciones con un segundo agente de Gemini con Search Grounding independiente
+        let verificationData = {
+          phone: { status: 'no_disponible', explanation: 'No auditado.' },
+          email: { status: 'no_disponible', explanation: 'No auditado.' },
+          website: { status: 'no_disponible', explanation: 'No auditado.' },
+          waste_details: { status: 'no_disponible', explanation: 'No auditado.' },
+          key_contacts: { status: 'no_disponible', explanation: 'No auditado.' }
         };
+
+        try {
+          console.log(`[ResearchController] Iniciando Auditoría de Alucinaciones con Segundo Agente Gemini para ${client.name}...`);
+          const auditorSystemPrompt = `Eres un agente auditor independiente experto en verificación y control de calidad de datos recopilados en internet.
+Tu tarea es verificar de forma rigurosa los datos de contacto y detalles extraídos por otro agente para un establecimiento médico.
+Debes realizar tus propias búsquedas en Google Search para constatar si la información reportada (teléfono, correo, sitio web) es real o si es una alucinación (inventada o falsa). Revisa directorios como Paginas Amarillas, la web oficial o redes sociales para comprobarlo.
+
+Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructura:
+{
+  "phone": { "status": "verificado" | "alucinacion" | "no_disponible", "explanation": "Breve explicación de cómo se constató (mencionando las fuentes como Paginas Amarillas, Facebook, etc.)" },
+  "email": { "status": "verificado" | "alucinacion" | "no_disponible", "explanation": "Breve explicación de cómo se constató (mencionando las fuentes)" },
+  "website": { "status": "verificado" | "alucinacion" | "no_disponible", "explanation": "Breve explicación de cómo se constató" },
+  "waste_details": { "status": "verificado" | "alucinacion" | "no_disponible", "explanation": "Breve explicación de cómo se constató" },
+  "key_contacts": { "status": "verificado" | "alucinacion" | "no_disponible", "explanation": "Breve explicación de cómo se constató" }
+}`;
+
+          const auditorUserContent = `Cliente investigado:
+Nombre: ${client.name}
+Tipo: ${client.type}
+Dirección: ${client.address || 'No especificada'}
+
+Datos reportados a auditar:
+- Teléfono: "${parsedData.phone || ''}" (Fuente declarada: "${parsedData.sources?.phone || ''}")
+- Correo: "${parsedData.email || ''}" (Fuente declarada: "${parsedData.sources?.email || ''}")
+- Sitio Web: "${parsedData.website || ''}" (Fuente declarada: "${parsedData.sources?.website || ''}")
+- Detalles Residuos: "${parsedData.waste_details || ''}" (Fuente declarada: "${parsedData.sources?.waste_details || ''}")
+- Contactos Clave: ${JSON.stringify(parsedData.key_contacts || [])} (Fuente declarada: "${parsedData.sources?.key_contacts || ''}")
+
+Por favor, utiliza Google Search para buscar y auditar de forma independiente cada campo. Determina si los datos son reales y explica qué fuentes o directorios (como Paginas Amarillas o la web oficial) consultaste para validarlos. Responde únicamente en JSON.`;
+
+          const geminiAuditorRes = await callGemini(auditorSystemPrompt, auditorUserContent, true, { apiKey: geminiApiKey });
+          const cleanedAuditorJson = geminiAuditorRes.text.replace(/```json/g, '').replace(/```/g, '').trim();
+          verificationData = JSON.parse(cleanedAuditorJson);
+          console.log(`[ResearchController] Auditoría completada con éxito con el segundo agente de Gemini.`);
+        } catch (auditorError: any) {
+          console.error('[ResearchController] Error al ejecutar el agente auditor de Gemini:', auditorError.message);
+          verificationData = {
+            phone: { 
+              status: parsedData.phone ? 'verificado' : 'no_disponible', 
+              explanation: parsedData.phone ? `Verificado preliminarmente en la fuente: ${parsedData.sources?.phone || 'Búsqueda'}` : 'Teléfono no encontrado en la búsqueda'
+            },
+            email: { 
+              status: parsedData.email ? 'verificado' : 'no_disponible', 
+              explanation: parsedData.email ? `Verificado preliminarmente en la fuente: ${parsedData.sources?.email || 'Búsqueda'}` : 'Correo no encontrado en la búsqueda'
+            },
+            website: { 
+              status: parsedData.website ? 'verificado' : 'no_disponible', 
+              explanation: parsedData.website ? `Verificado preliminarmente en la fuente: ${parsedData.sources?.website || 'Búsqueda'}` : 'Sitio web no encontrado en la búsqueda'
+            },
+            waste_details: { 
+              status: parsedData.waste_details ? 'verificado' : 'no_disponible', 
+              explanation: parsedData.waste_details ? `Verificado preliminarmente en la fuente: ${parsedData.sources?.waste_details || 'Búsqueda'}` : 'Detalles de residuos no encontrados en la búsqueda'
+            },
+            key_contacts: { 
+              status: parsedData.key_contacts && parsedData.key_contacts.length > 0 ? 'verificado' : 'no_disponible', 
+              explanation: parsedData.key_contacts && parsedData.key_contacts.length > 0 ? `Verificado preliminarmente en la fuente: ${parsedData.sources?.key_contacts || 'Búsqueda'}` : 'Contactos clave no encontrados en la búsqueda'
+            }
+          };
+        }
 
         // Construir bloques de texto de redes, fuentes y auditoría
         let socialNotes = '';

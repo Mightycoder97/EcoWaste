@@ -1,8 +1,16 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import styles from '../styles/modules/LeadTable.module.css';
 import { Client } from '@/models/db';
+import { 
+  Search, 
+  Download, 
+  Eye, 
+  Plus, 
+  Sparkles, 
+  FileSpreadsheet,
+  AlertCircle
+} from 'lucide-react';
 
 interface LeadTableProps {
   clients: Client[];
@@ -120,16 +128,11 @@ export default function LeadTable({
       <![endif]-->
       <style>
         table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
-        th { background-color: #10b981; color: #ffffff; font-weight: bold; border: 1px solid #94a3b8; padding: 10px; text-align: left; }
-        .type-badge { font-weight: bold; padding: 2px 6px; border-radius: 4px; }
-        .type-hospital { color: #dc2626; background-color: #fee2e2; }
-        .type-clinic { color: #2563eb; background-color: #dbeafe; }
-        .type-laboratory { color: #059669; background-color: #d1fae5; }
-        .type-dentist { color: #d97706; background-color: #fef3c7; }
-        .type-veterinary { color: #7c3aed; background-color: #f3e8ff; }
+        th { background-color: #f4f4f5; color: #09090b; font-weight: bold; border: 1px solid #e4e4e7; padding: 10px; text-align: left; }
+        .type-badge { font-weight: bold; padding: 2px 6px; border-radius: 4px; color: #71717a; background-color: #f4f4f5; border: 1px solid #e4e4e7; }
         
         .status-badge { font-weight: bold; font-size: 9pt; padding: 2px 6px; border-radius: 4px; }
-        .status-nuevo { color: #475569; background-color: #f1f5f9; }
+        .status-nuevo { color: #71717a; background-color: #f4f4f5; }
         .status-contactado { color: #2563eb; background-color: #dbeafe; }
         .status-negociacion { color: #d97706; background-color: #fef3c7; }
         .status-ganado { color: #059669; background-color: #d1fae5; }
@@ -139,11 +142,11 @@ export default function LeadTable({
         .volume-alto { color: #991b1b; background-color: #fca5a5; }
         .volume-medio { color: #92400e; background-color: #fcd34d; }
         .volume-bajo { color: #1e3a8a; background-color: #bfdbfe; }
-        .volume-none { color: #64748b; background-color: #f1f5f9; }
+        .volume-none { color: #71717a; background-color: #f4f4f5; }
       </style>
       </head>
       <body>
-        <h2>Lista de Leads Calificados - EcoWaste Finder</h2>
+        <h2>Lista de Leads Calificados - EcoWaste</h2>
         <p>Generado el: ${new Date().toLocaleString()}</p>
         <table border="1" style="border-collapse: collapse;">
           <thead>
@@ -190,21 +193,27 @@ export default function LeadTable({
   };
 
   return (
-    <div className={styles.tableContainer}>
+    <div className="flex flex-col gap-4 w-full text-foreground select-none">
+      
       {/* Filtros */}
-      <div className={styles.filtersBar}>
-        <div className={styles.searchGroup}>
-          <span>🔍</span>
+      <div className="flex flex-col md:flex-row gap-3 items-center justify-between bg-card border border-border p-4 rounded-lg shadow-sm">
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             placeholder="Buscar por nombre o dirección..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-9 pl-9 pr-3 rounded-md border border-input bg-transparent text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
 
-        <div className={styles.selectWrapper}>
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+          <select 
+            value={typeFilter} 
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="h-9 rounded-md border border-input bg-card text-foreground px-3 py-1 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full sm:w-36 cursor-pointer"
+          >
             <option value="">Todos los tipos</option>
             <option value="hospital">Hospitales</option>
             <option value="clinic">Clínicas</option>
@@ -213,142 +222,158 @@ export default function LeadTable({
             <option value="veterinary">Veterinarias</option>
           </select>
 
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <select 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 rounded-md border border-input bg-card text-foreground px-3 py-1 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full sm:w-36 cursor-pointer"
+          >
             <option value="">Todos los estados</option>
-            <option value="nuevo">Nuevo (Buscador)</option>
+            <option value="nuevo">Nuevo</option>
             <option value="contactado">Contactado</option>
             <option value="negociacion">En Negociación</option>
             <option value="ganado">Cerrado (Ganado)</option>
             <option value="descartado">Descartado</option>
           </select>
-        </div>
 
-        <button 
-          onClick={handleExportExcel} 
-          className={styles.btnExport}
-          disabled={filteredClients.length === 0}
-        >
-          📤 Descargar Excel (.xls)
-        </button>
+          <button 
+            onClick={handleExportExcel} 
+            className="h-9 border border-border hover:bg-muted text-xs font-semibold px-3 rounded-md flex items-center justify-center gap-1.5 cursor-pointer transition-colors w-full sm:w-auto text-muted-foreground hover:text-foreground shrink-0"
+            disabled={filteredClients.length === 0}
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Exportar Excel</span>
+          </button>
+        </div>
       </div>
 
       {/* Tabla (Escritorio) */}
-      <div className={styles.tableWrapper}>
+      <div className="hidden sm:block border border-border rounded-lg overflow-hidden bg-card shadow-sm">
         {filteredClients.length === 0 ? (
-          <div className={styles.noResults}>
-            No se encontraron clientes calificados en esta vista.
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            No se encontraron establecimientos calificados en esta vista.
           </div>
         ) : (
-          <table className={styles.leadTable}>
+          <table className="w-full text-sm text-left border-collapse">
             <thead>
-              <tr>
+              <tr className="bg-muted/30 border-b border-border/80 text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">
                 {selectedIds && onToggleSelectAll && (
-                  <th style={{ width: '40px', padding: '14px 10px', textAlign: 'center' }}>
+                  <th className="w-10 px-4 py-3 text-center">
                     <input
                       type="checkbox"
                       checked={filteredClients.length > 0 && filteredClients.every((c) => selectedIds.has(c.id))}
                       onChange={() => onToggleSelectAll(filteredClients.map((c) => c.id))}
-                      style={{ cursor: 'pointer', accentColor: 'var(--color-primary)', width: '16px', height: '16px' }}
+                      className="cursor-pointer rounded border-input text-primary focus:ring-ring w-4 h-4"
                     />
                   </th>
                 )}
-                <th>Establecimiento</th>
-                <th>Tipo</th>
-                <th>Ubicación</th>
-                <th>Contacto Encontrado</th>
-                <th>Volumen Residuos</th>
-                <th>Acciones</th>
+                <th className="px-4 py-3">Establecimiento</th>
+                <th className="px-4 py-3">Tipo</th>
+                <th className="px-4 py-3">Ubicación</th>
+                <th className="px-4 py-3">Contacto</th>
+                <th className="px-4 py-3">Volumen</th>
+                <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border/60">
               {filteredClients.map((client) => {
                 const isSaved = savedIds.has(client.id);
                 
                 return (
-                  <tr key={client.id} className={selectedIds?.has(client.id) ? styles.rowSelected : ''}>
+                  <tr 
+                    key={client.id} 
+                    className={`hover:bg-muted/20 transition-colors ${
+                      selectedIds?.has(client.id) ? 'bg-muted/10' : ''
+                    }`}
+                  >
                     {selectedIds && onToggleSelect && (
-                      <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                      <td className="px-4 py-3.5 text-center">
                         <input
                           type="checkbox"
                           checked={selectedIds.has(client.id)}
                           onChange={() => onToggleSelect(client.id)}
-                          style={{ cursor: 'pointer', accentColor: 'var(--color-primary)', width: '16px', height: '16px' }}
+                          className="cursor-pointer rounded border-input text-primary focus:ring-ring w-4 h-4"
                         />
                       </td>
                     )}
-                    <td>
-                      <div className={styles.clientNameCell}>{client.name}</div>
-                      <span className={`status-badge status-${client.status}`}>
-                        {client.status}
-                      </span>
+                    <td className="px-4 py-3.5">
+                      <div className="font-semibold text-foreground leading-snug">{client.name}</div>
+                      <div className="mt-1">
+                        <span className={`inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full font-mono uppercase font-semibold ${
+                          client.status === 'nuevo' ? 'bg-zinc-800 text-zinc-300 border border-zinc-700' :
+                          client.status === 'contactado' ? 'bg-blue-950/20 text-blue-300 border border-blue-900/30' :
+                          client.status === 'negociacion' ? 'bg-yellow-950/20 text-yellow-300 border border-yellow-900/30' :
+                          client.status === 'ganado' ? 'bg-green-950/20 text-green-300 border border-green-900/30' :
+                          'bg-red-950/20 text-red-300 border border-red-900/30'
+                        }`}>
+                          {client.status}
+                        </span>
+                      </div>
                     </td>
-                    <td>
-                      <span className={`type-badge type-${client.type}`}>
+                    <td className="px-4 py-3.5">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded border border-border bg-muted/40 text-muted-foreground font-medium">
                         {getTypeLabel(client.type)}
                       </span>
                     </td>
-                    <td>
-                      <div className={styles.addressCell} title={client.address}>
-                        {client.address || 'Sin dirección registrada'}
+                    <td className="px-4 py-3.5">
+                      <div className="max-w-[200px] truncate text-xs text-muted-foreground" title={client.address}>
+                        {client.address || 'Sin dirección'}
                       </div>
                     </td>
-                    <td>
-                      <div className={styles.contactInfoCell}>
-                        {client.phone && <span>📞 {client.phone}</span>}
+                    <td className="px-4 py-3.5">
+                      <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                        {client.phone && <span>{client.phone}</span>}
                         {client.email && (
-                          <a href={`mailto:${client.email}`} className={styles.contactLink}>
-                            ✉️ {client.email}
+                          <a href={`mailto:${client.email}`} className="text-foreground hover:underline truncate max-w-[150px]">
+                            {client.email}
                           </a>
                         )}
                         {!client.phone && !client.email && (
-                          <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
-                            No investigado aún
-                          </span>
+                          <span className="text-[10px] italic">No calificado</span>
                         )}
                       </div>
                     </td>
-                    <td>
+                    <td className="px-4 py-3.5">
                       {client.waste_volume ? (
-                        <span className={`${styles.wasteVolumeCell} ${
-                          client.waste_volume === 'alto' ? styles.volumeHigh :
-                          client.waste_volume === 'medio' ? styles.volumeMedium : styles.volumeLow
+                        <span className={`inline-flex items-center text-[9px] px-1.5 py-0.5 rounded font-mono uppercase font-semibold ${
+                          client.waste_volume === 'alto' ? 'bg-red-950/20 text-red-300 border border-red-900/30' :
+                          client.waste_volume === 'medio' ? 'bg-yellow-950/20 text-yellow-300 border border-yellow-900/30' : 
+                          'bg-zinc-800 text-zinc-300 border border-zinc-700'
                         }`}>
-                          🔴 {client.waste_volume.toUpperCase()}
+                          {client.waste_volume}
                         </span>
                       ) : (
-                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
-                          Sin clasificar
-                        </span>
+                        <span className="text-[10px] text-muted-foreground italic">Sin analizar</span>
                       )}
                     </td>
-                    <td>
-                      <div className={styles.actionGroup}>
+                    <td className="px-4 py-3.5 text-right">
+                      <div className="inline-flex items-center gap-1.5">
                         <button
                           onClick={() => onSelectClient(client)}
-                          className={`${styles.btnAction} ${styles.btnActionSecondary}`}
+                          className="h-8 px-2.5 hover:bg-muted text-xs font-semibold rounded-md border border-border flex items-center gap-1 cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+                          title="Ver ficha"
                         >
-                          👁️ Ficha
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Ficha</span>
                         </button>
                         
                         {!isSaved && (
                           <button
                             onClick={() => onSaveToCRM(client)}
-                            className={`${styles.btnAction} ${styles.btnActionPrimary}`}
+                            className="h-8 px-2.5 hover:bg-muted text-xs font-semibold rounded-md border border-border flex items-center gap-1 cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+                            title="Añadir a CRM"
                           >
-                            ➕ CRM
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>CRM</span>
                           </button>
                         )}
                         
                         <button
                           onClick={() => onInvestigateClient(client)}
-                          className={`${styles.btnAction} ${styles.btnActionPrimary}`}
-                          style={{
-                            background: 'var(--border-glow)',
-                            color: 'var(--color-primary-hover)',
-                            border: '1px solid rgba(16, 185, 129, 0.3)'
-                          }}
+                          className="h-8 px-2.5 bg-foreground text-background hover:bg-foreground/90 text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer transition-colors"
+                          title="Investigar con IA"
                         >
-                          🤖 DeepSeek
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Analizar</span>
                         </button>
                       </div>
                     </td>
@@ -361,10 +386,10 @@ export default function LeadTable({
       </div>
 
       {/* Tarjetas responsivas (Móvil) */}
-      <div className={styles.mobileCardList}>
+      <div className="block sm:hidden flex flex-col gap-3">
         {filteredClients.length === 0 ? (
-          <div className={styles.noResults}>
-            No se encontraron clientes calificados en esta vista.
+          <div className="py-12 text-center text-sm text-muted-foreground bg-card border border-border rounded-lg">
+            No se encontraron establecimientos.
           </div>
         ) : (
           filteredClients.map((client) => {
@@ -372,97 +397,96 @@ export default function LeadTable({
             const isChecked = selectedIds?.has(client.id);
             
             return (
-              <div key={client.id} className={`${styles.mobileCard} ${isChecked ? styles.cardSelected : ''}`}>
-                {selectedIds && onToggleSelect && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px dashed rgba(255, 255, 255, 0.05)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Seleccionar para análisis</span>
+              <div 
+                key={client.id} 
+                className={`bg-card border rounded-lg p-4 flex flex-col gap-3 transition-colors ${
+                  isChecked ? 'border-foreground/40 bg-muted/10' : 'border-border'
+                }`}
+              >
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex flex-col gap-1">
+                    <div className="font-semibold text-foreground text-sm">{client.name}</div>
+                    <div className="flex flex-wrap gap-1.5 mt-0.5">
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono uppercase font-semibold ${
+                        client.status === 'nuevo' ? 'bg-zinc-800 text-zinc-300 border border-zinc-700' :
+                        client.status === 'contactado' ? 'bg-blue-950/20 text-blue-300 border border-blue-900/30' :
+                        client.status === 'negociacion' ? 'bg-yellow-950/20 text-yellow-300 border border-yellow-900/30' :
+                        client.status === 'ganado' ? 'bg-green-950/20 text-green-300 border border-green-900/30' :
+                        'bg-red-950/20 text-red-300 border border-red-900/30'
+                      }`}>
+                        {client.status}
+                      </span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded border border-border bg-muted/40 text-muted-foreground font-medium">
+                        {getTypeLabel(client.type)}
+                      </span>
+                    </div>
+                  </div>
+                  {selectedIds && onToggleSelect && (
                     <input
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => onToggleSelect(client.id)}
-                      style={{ cursor: 'pointer', accentColor: 'var(--color-primary)', width: '18px', height: '18px' }}
+                      className="cursor-pointer rounded border-input text-primary focus:ring-ring w-4.5 h-4.5"
                     />
-                  </div>
-                )}
-                <div className={styles.mobileCardHeader}>
-                  <div className={styles.mobileCardTitle}>{client.name}</div>
-                  <div className={styles.mobileCardBadges}>
-                    <span className={`type-badge type-${client.type}`}>
-                      {getTypeLabel(client.type)}
-                    </span>
-                    <span className={`status-badge status-${client.status}`}>
-                      {client.status}
-                    </span>
-                  </div>
+                  )}
                 </div>
 
-                <div className={styles.mobileCardBody}>
-                  <div className={styles.mobileCardInfo}>
-                    <span className={styles.mobileCardLabel}>📍 Dirección:</span>
-                    <span className={styles.mobileCardValue}>{client.address || 'Sin dirección registrada'}</span>
+                <div className="flex flex-col gap-1.5 text-xs border-t border-border/40 pt-3">
+                  <div className="flex items-start gap-1">
+                    <span className="text-muted-foreground w-16 shrink-0">Ubicación:</span>
+                    <span className="text-foreground">{client.address || 'Sin dirección'}</span>
                   </div>
 
-                  <div className={styles.mobileCardInfo}>
-                    <span className={styles.mobileCardLabel}>📞 Contacto:</span>
-                    <div className={styles.mobileCardContact}>
-                      {client.phone && <span>📞 {client.phone}</span>}
-                      {client.email && (
-                        <a href={`mailto:${client.email}`} className={styles.contactLink}>
-                          ✉️ {client.email}
-                        </a>
-                      )}
-                      {!client.phone && !client.email && (
-                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
-                          No investigado aún
-                        </span>
-                      )}
+                  <div className="flex items-start gap-1">
+                    <span className="text-muted-foreground w-16 shrink-0">Contacto:</span>
+                    <div className="flex flex-col text-foreground">
+                      {client.phone && <span>{client.phone}</span>}
+                      {client.email && <a href={`mailto:${client.email}`} className="underline">{client.email}</a>}
+                      {!client.phone && !client.email && <span className="italic text-muted-foreground">No calificado</span>}
                     </div>
                   </div>
 
-                  <div className={styles.mobileCardInfo}>
-                    <span className={styles.mobileCardLabel}>☣️ Residuos:</span>
+                  <div className="flex items-start gap-1">
+                    <span className="text-muted-foreground w-16 shrink-0">Volumen:</span>
                     {client.waste_volume ? (
-                      <span className={`${styles.wasteVolumeCell} ${
-                        client.waste_volume === 'alto' ? styles.volumeHigh :
-                        client.waste_volume === 'medio' ? styles.volumeMedium : styles.volumeLow
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono uppercase font-semibold ${
+                        client.waste_volume === 'alto' ? 'bg-red-950/20 text-red-300 border border-red-900/30' :
+                        client.waste_volume === 'medio' ? 'bg-yellow-950/20 text-yellow-300 border border-yellow-900/30' : 
+                        'bg-zinc-800 text-zinc-300 border border-zinc-700'
                       }`}>
-                        🔴 {client.waste_volume.toUpperCase()}
+                        {client.waste_volume}
                       </span>
                     ) : (
-                      <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
-                        Sin clasificar
-                      </span>
+                      <span className="text-[10px] text-muted-foreground italic">Sin analizar</span>
                     )}
                   </div>
                 </div>
 
-                <div className={styles.mobileCardActions}>
+                <div className="flex gap-2 border-t border-border/40 pt-3 mt-1">
                   <button
                     onClick={() => onSelectClient(client)}
-                    className={`${styles.btnAction} ${styles.btnActionSecondary}`}
+                    className="flex-1 h-8 hover:bg-muted text-xs font-semibold rounded-md border border-border flex items-center justify-center gap-1 cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
                   >
-                    👁️ Ficha
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Ficha</span>
                   </button>
                   
                   {!isSaved && (
                     <button
                       onClick={() => onSaveToCRM(client)}
-                      className={`${styles.btnAction} ${styles.btnActionPrimary}`}
+                      className="flex-1 h-8 hover:bg-muted text-xs font-semibold rounded-md border border-border flex items-center justify-center gap-1 cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
                     >
-                      ➕ CRM
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>CRM</span>
                     </button>
                   )}
                   
                   <button
                     onClick={() => onInvestigateClient(client)}
-                    className={`${styles.btnAction} ${styles.btnActionPrimary}`}
-                    style={{
-                      background: 'var(--border-glow)',
-                      color: 'var(--color-primary-hover)',
-                      border: '1px solid rgba(16, 185, 129, 0.3)'
-                    }}
+                    className="flex-1 h-8 bg-foreground text-background hover:bg-foreground/90 text-xs font-semibold rounded-md flex items-center justify-center gap-1 cursor-pointer transition-colors"
                   >
-                    🤖 DeepSeek
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Analizar</span>
                   </button>
                 </div>
               </div>
@@ -473,18 +497,22 @@ export default function LeadTable({
 
       {/* Barra flotante de acciones en lote */}
       {selectedIds && selectedIds.size > 0 && onBulkInvestigate && (
-        <div className={styles.bulkActionBar}>
-          <div className={styles.bulkActionInfo}>
-            <span className={styles.bulkActionIcon}>⚡</span>
-            <div>
-              <div className={styles.bulkActionTitle}>
-                <b>{selectedIds.size}</b> {selectedIds.size === 1 ? 'establecimiento seleccionado' : 'establecimientos seleccionados'}
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-card border border-border px-5 py-4 rounded-xl shadow-lg flex items-center gap-6 z-50 animate-in fade-in slide-in-from-bottom-4 w-[90%] max-w-md md:w-auto">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <AlertCircle className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+            <div className="flex flex-col min-w-0">
+              <div className="text-xs font-semibold text-foreground">
+                {selectedIds.size} {selectedIds.size === 1 ? 'establecimiento seleccionado' : 'establecimientos seleccionados'}
               </div>
-              <div className={styles.bulkActionSubtitle}>Listo para investigación con DeepSeek V4</div>
+              <div className="text-[10px] text-muted-foreground truncate">Listo para análisis automático en lote</div>
             </div>
           </div>
-          <button onClick={onBulkInvestigate} className={styles.btnBulkAction}>
-            🤖 Investigar Selección
+          <button 
+            onClick={onBulkInvestigate} 
+            className="h-8 bg-foreground text-background hover:bg-foreground/90 text-xs font-semibold px-3 rounded-md flex items-center gap-1 cursor-pointer shrink-0 transition-colors shadow"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Analizar selección</span>
           </button>
         </div>
       )}
