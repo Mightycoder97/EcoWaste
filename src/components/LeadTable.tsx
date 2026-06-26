@@ -196,8 +196,8 @@ export default function LeadTable({
     <div className="flex flex-col gap-4 w-full text-foreground select-none">
       
       {/* Filtros */}
-      <div className="flex flex-col md:flex-row gap-3 items-center justify-between bg-card border border-border p-4 rounded-lg shadow-sm">
-        <div className="relative w-full md:w-72">
+      <div className="flex flex-col gap-3 bg-card border border-border p-4 rounded-lg shadow-sm">
+        <div className="relative w-full">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
           <input
             type="text"
@@ -208,11 +208,11 @@ export default function LeadTable({
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
           <select 
             value={typeFilter} 
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-9 rounded-md border border-input bg-card text-foreground px-3 py-1 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full sm:w-36 cursor-pointer"
+            className="h-9 rounded-md border border-input bg-card text-foreground px-2 text-[11px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full cursor-pointer"
           >
             <option value="">Todos los tipos</option>
             <option value="hospital">Hospitales</option>
@@ -225,7 +225,7 @@ export default function LeadTable({
           <select 
             value={statusFilter} 
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 rounded-md border border-input bg-card text-foreground px-3 py-1 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full sm:w-36 cursor-pointer"
+            className="h-9 rounded-md border border-input bg-card text-foreground px-2 text-[11px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full cursor-pointer"
           >
             <option value="">Todos los estados</option>
             <option value="nuevo">Nuevo</option>
@@ -237,7 +237,7 @@ export default function LeadTable({
 
           <button 
             onClick={handleExportExcel} 
-            className="h-9 border border-border hover:bg-muted text-xs font-semibold px-3 rounded-md flex items-center justify-center gap-1.5 cursor-pointer transition-colors w-full sm:w-auto text-muted-foreground hover:text-foreground shrink-0"
+            className="h-9 border border-border hover:bg-muted text-[11px] font-semibold px-2 rounded-md flex items-center justify-center gap-1.5 cursor-pointer transition-colors w-full text-muted-foreground hover:text-foreground shrink-0 truncate"
             disabled={filteredClients.length === 0}
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -247,10 +247,12 @@ export default function LeadTable({
       </div>
 
       {/* Tabla (Escritorio) */}
-      <div className="hidden sm:block border border-border rounded-lg overflow-hidden bg-card shadow-sm">
+      <div className="hidden sm:block border border-border rounded-lg overflow-x-auto bg-card shadow-sm">
         {filteredClients.length === 0 ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            No se encontraron establecimientos calificados en esta vista.
+          <div className="py-12 text-center text-xs text-muted-foreground px-4">
+            {clients.length === 0 
+              ? 'Ingresa una ubicación y presiona "Buscar cercanos" para comenzar.' 
+              : 'No se encontraron establecimientos en esta vista.'}
           </div>
         ) : (
           <table className="w-full text-sm text-left border-collapse">
@@ -388,8 +390,10 @@ export default function LeadTable({
       {/* Tarjetas responsivas (Móvil) */}
       <div className="block sm:hidden flex flex-col gap-3">
         {filteredClients.length === 0 ? (
-          <div className="py-12 text-center text-sm text-muted-foreground bg-card border border-border rounded-lg">
-            No se encontraron establecimientos.
+          <div className="py-12 text-center text-xs text-muted-foreground bg-card border border-border rounded-lg px-4">
+            {clients.length === 0 
+              ? 'Ingresa una ubicación y presiona "Buscar cercanos" para comenzar.' 
+              : 'No se encontraron establecimientos.'}
           </div>
         ) : (
           filteredClients.map((client) => {
