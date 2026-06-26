@@ -180,13 +180,18 @@ export class ResearchController {
       
       const geminiSystemPrompt = `Eres un asistente experto en investigación de mercado, fiscalización ambiental y gestión de residuos peligrosos.
 Tu objetivo es realizar una búsqueda profunda en internet sobre el establecimiento médico indicado para encontrar información de contacto verídica (teléfono, correo electrónico, sitio web) y calificar su generación de residuos.
-Debes priorizar la búsqueda de al menos un teléfono y un correo electrónico real. Para ello, realiza búsquedas minuciosas que incluyan directorios nacionales (como "Paginas Amarillas", directorios médicos), redes sociales (Facebook, Instagram, LinkedIn) y páginas de contacto oficiales.
+
+Tu estrategia de búsqueda debe seguir estrictamente este orden de prioridad:
+1. Identificar y verificar el sitio web oficial del establecimiento. Si se encuentra, extrae de allí la mayor parte de los datos (teléfono de contacto, correo electrónico principal, etc.).
+2. Buscar números de teléfono que cuenten explícitamente con WhatsApp activo para contacto y comunicación directa, además de direcciones de correo electrónico específicas idóneas para el envío de propuestas comerciales.
+3. Si no existe un sitio web verificado, realiza búsquedas minuciosas en directorios nacionales y perfiles de redes sociales (Facebook, Instagram, LinkedIn) para extraer los datos de contacto, incluyendo números de WhatsApp y correos electrónicos.
+4. Si encuentras perfiles oficiales de redes sociales, regístralos siempre en la sección "social_media".
 
 Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructura:
 {
-  "phone": "Teléfono de contacto principal (debe ser un string)",
-  "email": "Correo electrónico de contacto (debe ser un string)",
-  "website": "URL del sitio web oficial",
+  "phone": "Teléfono de contacto principal (debe ser un string. Si hay WhatsApp, indica preferentemente el número con WhatsApp)",
+  "email": "Correo electrónico de contacto o para enviar propuestas comerciales (debe ser un string)",
+  "website": "URL del sitio web oficial verificado",
   "social_media": {
     "facebook": "Enlace oficial a la página de Facebook si se encuentra (o un string vacío)",
     "instagram": "Enlace oficial a la página de Instagram si se encuentra (o un string vacío)",
@@ -202,7 +207,7 @@ Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructu
       "email": "Email directo (opcional)"
     }
   ],
-  "synthesis": "Una síntesis corta (2-3 oraciones en español) que resuma los hallazgos sobre la empresa, canales de contacto y necesidades de residuos.",
+  "synthesis": "Una síntesis corta (2-3 oraciones en español) que resuma los hallazgos sobre la empresa, canales de contacto (indicando si tiene WhatsApp o correos de propuestas) y necesidades de residuos.",
   "sources": {
     "phone": "URL exacta de donde obtuviste el teléfono (o string vacío)",
     "email": "URL exacta de donde obtuviste el correo (o string vacío)",
@@ -213,7 +218,7 @@ Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructu
 }
 
 REGLAS CRÍTICAS DE PRECISIÓN:
-1. Utiliza la herramienta de búsqueda de Google para buscar información real sobre el cliente en internet. Refina la búsqueda si es necesario (ej. buscando en 'Paginas Amarillas', 'Facebook', 'contacto', 'director').
+1. Utiliza la herramienta de búsqueda de Google para buscar información real sobre el cliente en internet. Realiza búsquedas específicas (sitio web, whatsapp, facebook, instagram, linkedin, etc.).
 2. Extrae únicamente datos reales encontrados en la web. NO inventes ni supongas teléfonos, correos ni nombres que no figuren explícitamente en los resultados de búsqueda. Si no hay información sobre un campo, déjalo vacío ("").
 3. Para cada campo en "sources", debes proveer la URL exacta de la cual extrajiste esa información.`;
 
@@ -399,10 +404,10 @@ Por favor, utiliza Google Search para buscar y auditar de forma independiente ca
     }
 
     // 1. Ejecutar búsquedas en la web en paralelo
-    const query1 = `${client.name} contacto telefono email`;
-    const query2 = `${client.name} residuos`;
+    const query1 = `${client.name} sitio web oficial contacto`;
+    const query2 = `${client.name} telefono whatsapp email correo`;
     const query3 = `${client.name} facebook instagram linkedin`;
-    const query4 = `${client.name} direccion telefono`;
+    const query4 = `${client.name} residuos peligrosos volumen`;
     
     console.log(`[ResearchController] Ejecutando búsquedas en paralelo con Serper para: ${client.name}...`);
     let allSearchResults: any[] = [];
@@ -424,13 +429,20 @@ Por favor, utiliza Google Search para buscar y auditar de forma independiente ca
     // 2. Preparar el prompt para DeepSeek V4
     const systemPrompt = `Eres un asistente experto en investigación de mercado, fiscalización ambiental y gestión de residuos peligrosos.
 Tu objetivo es analizar resultados de búsqueda web para un cliente específico y extraer/sintetizar información de contacto completa y detalles sobre su generación de residuos.
+
+Tu estrategia de análisis debe seguir estrictamente este orden de prioridad:
+1. Identificar y verificar el sitio web oficial del establecimiento en los resultados de búsqueda. Si se encuentra, prioriza la extracción de datos de contacto (teléfono, correos, etc.) desde su dominio web.
+2. Buscar específicamente números de teléfono que tengan WhatsApp activo para comunicación directa y correos idóneos para enviar propuestas de servicios.
+3. Si no existe un sitio web verificado en los resultados de búsqueda, busca y extrae datos en directorios locales y perfiles de redes sociales (Facebook, Instagram, LinkedIn) incluidos en los resultados.
+4. Listar perfiles oficiales de redes sociales en la sección "social_media".
+
 Debes responder ÚNICAMENTE con un objeto JSON válido que contenga la estructura definida. No agregues texto explicativo antes ni después del JSON.
 
 Estructura JSON requerida:
 {
-  "phone": "Teléfono de contacto principal (debe ser un string)",
-  "email": "Correo electrónico de contacto (debe ser un string)",
-  "website": "URL del sitio web oficial",
+  "phone": "Teléfono de contacto principal (debe ser un string. Prefiere número de WhatsApp si está identificado)",
+  "email": "Correo electrónico de contacto o para propuestas comerciales (debe ser un string)",
+  "website": "URL del sitio web oficial verificado",
   "social_media": {
     "facebook": "Enlace oficial a la página de Facebook si se encuentra (o un string vacío)",
     "instagram": "Enlace oficial a la página de Instagram si se encuentra (o un string vacío)",
@@ -446,7 +458,7 @@ Estructura JSON requerida:
       "email": "Email directo (opcional)"
     }
   ],
-  "synthesis": "Una síntesis corta (2-3 oraciones en español) que resuma los hallazgos sobre la empresa, canales de contacto y necesidades de residuos.",
+  "synthesis": "Una síntesis corta (2-3 oraciones en español) que resuma los hallazgos sobre la empresa, canales de contacto (destacando WhatsApp o email de propuestas si existen) y necesidades de residuos.",
   "sources": {
     "phone": "URL exacta de la página de los resultados de búsqueda de la cual obtuviste el teléfono (o string vacío)",
     "email": "URL exacta de la página de los resultados de búsqueda de la cual obtuviste el correo (o string vacío)",
