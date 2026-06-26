@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import './globals.css';
+import 'leaflet/dist/leaflet.css';
 
 export const metadata: Metadata = {
   title: 'EcoWaste Finder - Buscador y CRM de Residuos Peligrosos',
