@@ -644,7 +644,7 @@ export default function Dashboard() {
   }, [searchResults, savedClients]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row pb-16 md:pb-0 select-none">
+    <div className="h-screen w-screen bg-background text-foreground flex flex-col md:flex-row select-none overflow-hidden">
       
       {/* Sidebar de navegación */}
       <div className="hidden md:flex flex-col w-64 bg-card border-r border-border p-6 gap-6 shrink-0 justify-between">
@@ -732,12 +732,12 @@ export default function Dashboard() {
       </div>
 
       {/* Área Principal de Trabajo */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden pb-16 md:pb-0">
         {activeTab === 'buscador' && (
-          <div className="p-6 flex flex-col gap-6 max-w-7xl mx-auto w-full">
+          <div className="p-6 flex flex-col gap-5 w-full h-full min-h-0 overflow-hidden">
             
             {/* Cabecera del buscador */}
-            <form onSubmit={handleGeographicSearch} className="bg-card border border-border rounded-lg p-5 flex flex-col gap-5 shadow-sm">
+            <form onSubmit={handleGeographicSearch} className="bg-card border border-border rounded-lg p-5 flex flex-col gap-5 shadow-sm shrink-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 items-end">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Latitud</label>
@@ -853,7 +853,7 @@ export default function Dashboard() {
             </form>
 
             {activeSearchEngine && (
-              <div className="text-xs text-muted-foreground flex items-center gap-2 px-1 -mt-2">
+              <div className="text-xs text-muted-foreground flex items-center gap-2 px-1 -mt-2 shrink-0">
                 <span>Servicio de datos activo:</span>
                 <span className="font-semibold text-foreground bg-muted px-1.5 py-0.5 rounded flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
@@ -863,7 +863,7 @@ export default function Dashboard() {
             )}
 
             {googleMapsAlert && (
-              <div className="flex items-start justify-between gap-3 bg-red-950/20 border border-red-900/40 text-red-200 p-4 rounded-lg text-xs">
+              <div className="flex items-start justify-between gap-3 bg-red-950/20 border border-red-900/40 text-red-200 p-4 rounded-lg text-xs shrink-0">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
                   <div>
@@ -878,7 +878,7 @@ export default function Dashboard() {
 
             {/* Split Content: Mapa + Lead Table */}
             {isMobile && (
-              <div className="flex w-full border border-border rounded-md overflow-hidden bg-card">
+              <div className="flex w-full border border-border rounded-md overflow-hidden bg-card shrink-0">
                 <button
                   type="button"
                   className={`flex-1 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
@@ -902,9 +902,9 @@ export default function Dashboard() {
               </div>
             )}
 
-            <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-12'}`}>
+            <div className={`grid gap-6 flex-1 min-h-0 ${isMobile ? 'grid-cols-1 overflow-y-auto' : 'grid-cols-1 lg:grid-cols-12'}`}>
               {(!isMobile || searchViewMode === 'mapa') && (
-                <div className={`${isMobile ? 'h-[400px]' : 'lg:col-span-6 xl:col-span-7 h-[580px]'} flex flex-col`}>
+                <div className={`${isMobile ? 'h-[400px] shrink-0' : 'lg:col-span-6 xl:col-span-7 h-full'} flex flex-col min-h-0`}>
                   <MapView
                     clients={mapClients}
                     onSelectClient={handleInvestigateClient}
@@ -920,7 +920,7 @@ export default function Dashboard() {
               )}
               
               {(!isMobile || searchViewMode === 'lista') && (
-                <div className={`${isMobile ? '' : 'lg:col-span-6 xl:col-span-5 h-[580px] overflow-y-auto'} flex flex-col`}>
+                <div className={`${isMobile ? 'shrink-0' : 'lg:col-span-6 xl:col-span-5 h-full'} flex flex-col min-h-0`}>
                   <LeadTable
                     clients={searchResults}
                     onSelectClient={handleSelectClient}
@@ -940,7 +940,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'tabla' && (
-          <div className="p-6 max-w-7xl mx-auto w-full">
+          <div className="p-6 w-full h-full min-h-0 flex flex-col overflow-hidden">
             <LeadTable
               clients={searchResults.length > 0 ? searchResults : savedClients}
               onSelectClient={handleSelectClient}
@@ -966,7 +966,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'configuracion' && (
-          <div className="p-6 max-w-3xl mx-auto w-full">
+          <div className="p-6 max-w-3xl mx-auto w-full h-full overflow-y-auto">
             <SettingsPanel
               onSettingsChange={() => {
                 loadDatabaseMode();

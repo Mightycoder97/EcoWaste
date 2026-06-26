@@ -193,10 +193,10 @@ export default function LeadTable({
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full text-foreground select-none">
+    <div className="flex flex-col gap-4 w-full h-full min-h-0 text-foreground select-none">
       
       {/* Filtros */}
-      <div className="flex flex-col gap-3 bg-card border border-border p-4 rounded-lg shadow-sm">
+      <div className="flex flex-col gap-3 bg-card border border-border p-4 rounded-lg shadow-sm shrink-0">
         <div className="relative w-full">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
           <input
@@ -247,7 +247,7 @@ export default function LeadTable({
       </div>
 
       {/* Tabla (Escritorio) */}
-      <div className="hidden sm:block border border-border rounded-lg overflow-x-auto bg-card shadow-sm">
+      <div className="hidden sm:block border border-border rounded-lg bg-card shadow-sm flex-1 min-h-0 overflow-y-auto overflow-x-auto">
         {filteredClients.length === 0 ? (
           <div className="py-12 text-center text-xs text-muted-foreground px-4">
             {clients.length === 0 
@@ -388,7 +388,7 @@ export default function LeadTable({
       </div>
 
       {/* Tarjetas responsivas (Móvil) */}
-      <div className="block sm:hidden flex flex-col gap-3">
+      <div className="block sm:hidden flex flex-col gap-3 overflow-y-auto flex-1 min-h-0">
         {filteredClients.length === 0 ? (
           <div className="py-12 text-center text-xs text-muted-foreground bg-card border border-border rounded-lg px-4">
             {clients.length === 0 
