@@ -219,8 +219,9 @@ Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructu
 
 REGLAS CRÍTICAS DE PRECISIÓN:
 1. Utiliza la herramienta de búsqueda de Google para buscar información real sobre el cliente en internet. Realiza búsquedas específicas (sitio web, whatsapp, facebook, instagram, linkedin, etc.).
-2. Extrae únicamente datos reales encontrados en la web. NO inventes ni supongas teléfonos, correos ni nombres que no figuren explícitamente en los resultados de búsqueda. Si no hay información sobre un campo, déjalo vacío ("").
-3. Para cada campo en "sources", debes proveer la URL exacta de la cual extrajiste esa información.`;
+2. EXTRACCIÓN DE ENLACES DE WHATSAPP: Es muy común que en las páginas web o redes sociales de los centros no figure el número de teléfono en texto simple, sino en botones o enlaces de redirección a WhatsApp (por ejemplo, enlaces tipo "wa.me/[número]", "api.whatsapp.com/send?phone=[número]", "web.whatsapp.com/send?phone=[número]" o "whatsapp://send?phone=[número]"). Debes inspeccionar minuciosamente las URLs de los enlaces encontrados en los snippets y fuentes de búsqueda, y si encuentras este formato, extrae el número de teléfono directamente del parámetro "phone" o del final de la URL "wa.me/".
+3. Extrae únicamente datos reales encontrados en la web. NO inventes ni supongas teléfonos, correos ni nombres que no figuren explícitamente en los resultados de búsqueda. Si no hay información sobre un campo, déjalo vacío ("").
+4. Para cada campo en "sources", debes proveer la URL exacta de la cual extrajiste esa información.`;
 
       const geminiUserContent = `Cliente a investigar:
 Nombre: ${client.name}
@@ -470,8 +471,9 @@ Estructura JSON requerida:
 
 REGLAS CRÍTICAS DE PRECISIÓN:
 1. Extrae únicamente datos reales presentes en los resultados de búsqueda web suministrados. NO inventes ni supongas teléfonos, correos ni nombres de personas si no están explícitamente en el texto.
-2. Si un dato no figura en los resultados de búsqueda, pon un string vacío ("") y deja su correspondiente URL de fuente en blanco ("").
-3. Para cada campo en "sources", especifica la URL exacta (el campo "link" del objeto en "Resultados de búsqueda web recopilados") del cual obtuviste la información. No inventes URLs que no estén en los resultados de búsqueda.`;
+2. EXTRACCIÓN DE ENLACES DE WHATSAPP: Si en los resultados o páginas recopiladas no figura el número de teléfono en texto visible, pero encuentras enlaces o botones de redirección a WhatsApp (por ejemplo, URLs conteniendo "wa.me/[número]", "api.whatsapp.com/send?phone=[número]" o "whatsapp://send?phone=[número]"), debes extraer el número de teléfono directamente del parámetro "phone" o del fragmento final del enlace "wa.me/" e identificarlo como el número de contacto.
+3. Si un dato no figura en los resultados de búsqueda, pon un string vacío ("") y deja su correspondiente URL de fuente en blanco ("").
+4. Para cada campo en "sources", especifica la URL exacta (el campo "link" del objeto en "Resultados de búsqueda web recopilados") del cual obtuviste la información. No inventes URLs que no estén en los resultados de búsqueda.`;
 
     const userContent = `Cliente a investigar:
 Nombre: ${client.name}
