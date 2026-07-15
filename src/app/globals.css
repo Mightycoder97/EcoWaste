@@ -1,42 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Share Tech Mono', 'Courier New', Courier, monospace;
   
-  --color-background: #09090b; /* zinc-950 */
-  --color-foreground: #fafafa; /* zinc-50 */
+  /* Espectro Táctico Palette */
+  --color-background: #06070a; 
+  --color-foreground: #fafafa; 
   
-  --color-card: #18181b; /* zinc-900 */
-  --color-card-foreground: #fafafa;
+  --color-card: #0d1117; 
+  --color-card-foreground: #f8fafc;
   
-  --color-popover: #09090b;
+  --color-popover: #090a0f;
   --color-popover-foreground: #fafafa;
   
-  --color-primary: #fafafa; /* zinc-50 */
-  --color-primary-foreground: #18181b; /* zinc-900 */
+  /* Verde Ecológico EcoWaste */
+  --color-primary: #10b981; 
+  --color-primary-foreground: #06070a;
   
-  --color-secondary: #27272a; /* zinc-800 */
+  --color-secondary: #0d1527; 
   --color-secondary-foreground: #fafafa;
   
-  --color-muted: #27272a;
-  --color-muted-foreground: #a1a1aa; /* zinc-400 */
+  --color-muted: #161b22;
+  --color-muted-foreground: #9ca3af; 
   
-  --color-accent: #27272a;
-  --color-accent-foreground: #fafafa;
+  /* Acento Cian Neón Táctico */
+  --color-accent: #06b6d4;
+  --color-accent-foreground: #06070a;
   
-  --color-border: #27272a;
-  --color-input: #27272a;
-  --color-ring: #d4d4d8; /* zinc-300 */
+  --color-border: #1f2937;
+  --color-input: #161b22;
+  --color-ring: #06b6d4; 
   
-  --color-alert-info: #3b82f6;
-  --color-alert-warning: #eab308;
-  --color-alert-error: #ef4444;
+  --color-alert-info: #06b6d4;
+  --color-alert-warning: #f59e0b;
+  --color-alert-error: #ff0055;
   --color-alert-success: #10b981;
 }
 
 :root {
   color-scheme: dark;
+  --neon-cyan: #06b6d4;
+  --neon-cyan-glow: rgba(6, 182, 212, 0.25);
+  --neon-cyan-dim: rgba(6, 182, 212, 0.10);
+  --border-tactical: #1f2937;
 }
 
 * {
@@ -63,26 +71,45 @@ body {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
-  border-radius: 9999px;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46; /* zinc-700 */
+  background: var(--neon-cyan);
+}
+
+/* HUD Panel tactical styles */
+.tactical-panel {
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 15px var(--neon-cyan-glow);
+}
+
+.tactical-border {
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan-glow);
+}
+
+.tactical-mono {
+  font-family: var(--font-mono);
 }
 
 /* Leaflet Dark Theme Integration */
 .leaflet-container {
-  background: #09090b !important;
+  background: #06070a !important;
   font-family: inherit !important;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 12px var(--neon-cyan-glow);
 }
 .leaflet-tile {
-  filter: invert(1) hue-rotate(180deg) brightness(0.7) contrast(1.2) saturate(0.2) !important;
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.1) saturate(0.7) !important;
 }
 .leaflet-bar {
   border: 1px solid var(--color-border) !important;
   box-shadow: none !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
   overflow: hidden;
 }
 .leaflet-bar a {
@@ -90,17 +117,18 @@ body {
   color: var(--color-foreground) !important;
   border-bottom: 1px solid var(--color-border) !important;
   transition: background-color 0.15s ease, color 0.15s ease;
+  font-family: var(--font-mono);
 }
 .leaflet-bar a:hover {
-  background-color: #27272a !important;
-  color: #ffffff !important;
+  background-color: var(--color-muted) !important;
+  color: var(--neon-cyan) !important;
 }
 .leaflet-popup-content-wrapper {
   background: var(--color-card) !important;
   color: var(--color-foreground) !important;
-  border: 1px solid var(--color-border);
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid var(--neon-cyan) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 15px var(--neon-cyan-glow), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
   padding: 2px !important;
 }
 .leaflet-popup-content {
@@ -109,14 +137,14 @@ body {
 }
 .leaflet-popup-tip {
   background: var(--color-card) !important;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--neon-cyan);
 }
 .leaflet-popup-close-button {
   color: var(--color-muted-foreground) !important;
   padding: 8px !important;
 }
 .leaflet-popup-close-button:hover {
-  color: var(--color-foreground) !important;
+  color: var(--neon-cyan) !important;
   background: transparent !important;
 }
 
@@ -124,15 +152,15 @@ body {
 @keyframes origin-pulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+    box-shadow: 0 0 0 10px rgba(6, 182, 212, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0);
   }
 }
 

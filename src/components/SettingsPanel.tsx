@@ -9,8 +9,6 @@ interface SettingsPanelProps {
 
 export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) {
   const [geminiKey, setGeminiKey] = useState('');
-  const [deepseekKey, setDeepseekKey] = useState('');
-  const [serperKey, setSerperKey] = useState('');
   const [supabaseUrl, setSupabaseUrl] = useState('');
   const [supabaseKey, setSupabaseKey] = useState('');
   const [isSaved, setIsSaved] = useState(false);
@@ -22,14 +20,10 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
   useEffect(() => {
     // Load settings from localStorage
     const savedGeminiKey = localStorage.getItem('GEMINI_API_KEY') || '';
-    const savedDeepseekKey = localStorage.getItem('DS_API_KEY') || 'sk-f9a0f8949ddd4e15a9445a1813f70942';
-    const savedSerperKey = localStorage.getItem('SERPER_API_KEY') || '';
     const savedSupabaseUrl = localStorage.getItem('SB_URL') || '';
     const savedSupabaseKey = localStorage.getItem('SB_ANON_KEY') || '';
 
     setGeminiKey(savedGeminiKey);
-    setDeepseekKey(savedDeepseekKey);
-    setSerperKey(savedSerperKey);
     setSupabaseUrl(savedSupabaseUrl);
     setSupabaseKey(savedSupabaseKey);
 
@@ -51,8 +45,6 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
     
     // Save to localStorage
     localStorage.setItem('GEMINI_API_KEY', geminiKey.trim());
-    localStorage.setItem('DS_API_KEY', deepseekKey.trim());
-    localStorage.setItem('SERPER_API_KEY', serperKey.trim());
     localStorage.setItem('SB_URL', supabaseUrl.trim());
     localStorage.setItem('SB_ANON_KEY', supabaseKey.trim());
 
@@ -114,7 +106,7 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="gemini-key" className="text-xs font-semibold text-foreground flex items-center justify-between">
             <span>Google Gemini API Key</span>
-            <span className="text-[10px] text-muted-foreground font-normal">Recomendado (Grounding Nativo)</span>
+            <span className="text-[10px] text-green-400 font-semibold">Requerido (Búsqueda e Investigación)</span>
           </label>
           <input
             id="gemini-key"
@@ -125,43 +117,7 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
             onChange={(e) => setGeminiKey(e.target.value)}
           />
           <p className="text-[10px] text-muted-foreground leading-normal">
-            Utilizada para la calificación con búsqueda nativa integrada en un solo agente. Su configuración reemplaza el flujo secundario.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="deepseek-key" className="text-xs font-semibold text-foreground flex items-center justify-between">
-            <span>DeepSeek API Key</span>
-            <span className="text-[10px] text-muted-foreground font-normal">Opcional (Respaldo)</span>
-          </label>
-          <input
-            id="deepseek-key"
-            type="password"
-            placeholder="sk-..."
-            className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            value={deepseekKey}
-            onChange={(e) => setDeepseekKey(e.target.value)}
-          />
-          <p className="text-[10px] text-muted-foreground leading-normal">
-            Clave utilizada como procesador secundario para estructurar resultados de búsqueda y análisis de volumen.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="serper-key" className="text-xs font-semibold text-foreground flex items-center justify-between">
-            <span>Serper.dev API Key</span>
-            <span className="text-[10px] text-muted-foreground font-normal">Opcional (Búsqueda Web)</span>
-          </label>
-          <input
-            id="serper-key"
-            type="password"
-            placeholder="Clave de API de Serper"
-            className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            value={serperKey}
-            onChange={(e) => setSerperKey(e.target.value)}
-          />
-          <p className="text-[10px] text-muted-foreground leading-normal">
-            Permite realizar búsquedas en tiempo real para recopilar información pública de los establecimientos. De lo contrario se simulará una recopilación realista.
+            Motor de IA principal. Incluye <strong>Google Search Grounding nativo</strong> — realiza la búsqueda en internet y el análisis del establecimiento de forma integrada. Obtén una clave gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">aistudio.google.com/apikey</a>.
           </p>
         </div>
 

@@ -488,8 +488,6 @@ export default function Dashboard() {
             client: crmClient,
             keys: {
               geminiKey,
-              deepseekKey: dsKey,
-              serperKey: spKey,
             },
           }),
         });

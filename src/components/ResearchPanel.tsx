@@ -93,8 +93,6 @@ export default function ResearchPanel({
           client,
           keys: {
             geminiKey,
-            deepseekKey: dsKey,
-            serperKey: spKey,
           },
         }),
       });
